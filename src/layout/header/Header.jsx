@@ -6,63 +6,57 @@ import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
 import Toolbar from "@mui/material/Toolbar";
 import IconButton from "@mui/material/IconButton";
-import Typography from "@mui/material/Typography";
-import InputBase from "@mui/material/InputBase";
 import Badge from "@mui/material/Badge";
 import MenuItem from "@mui/material/MenuItem";
 import Menu from "@mui/material/Menu";
 import MenuIcon from "@mui/icons-material/Menu";
 import SearchIcon from "@mui/icons-material/Search";
-import AccountCircle from "@mui/icons-material/AccountCircle";
-import MailIcon from "@mui/icons-material/Mail";
-import NotificationsIcon from "@mui/icons-material/Notifications";
 import MoreIcon from "@mui/icons-material/MoreVert";
-import Image from "next/image";
+import Drawer from "@mui/material/Drawer";
+import { InputBase } from "@mui/material";
 
 import userIcon from "@/public/images/User.png";
 import Inquiry from "@/public/images/Inquiry.png";
 import Motorcycle from "@/public/images/Motorcycle.png";
 import Logout from "@/public/images/Logout.png";
+import Image from "next/image";
 import messageIcon from "@/public/images/Chat Message.png";
-import notificationIcon from "@/public/images/Notification.png";
+import logo from "@/public/images/logo.png";
+import userHeader from "@/public/images/userHeader.png";
+import messHeader from "@/public/images/messHeader.png";
+import notifHeader from "@/public/images/notifHeader.png";
+import Sidebar from "../sidebar/Sidebar";
 
 const Search = styled("div")(({ theme }) => ({
-  position: "relative",
   borderRadius: theme.shape.borderRadius,
+  border: "solid 1px black",
   backgroundColor: alpha(theme.palette.common.white, 0.15),
   "&:hover": {
     backgroundColor: alpha(theme.palette.common.white, 0.25),
   },
-  // marginRight: theme.spacing(2),
   marginLeft: 0,
   width: "100%",
+  color: "black",
   [theme.breakpoints.up("sm")]: {
-    marginLeft: theme.spacing(3),
     width: "auto",
   },
 }));
 
 const SearchIconWrapper = styled("div")(({ theme }) => ({
-  padding: theme.spacing(0, 2),
-  height: "100%",
-  position: "absolute",
-  pointerEvents: "none",
+  padding: theme.spacing(0, 1),
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
+  cursor: "pointer",
 }));
 
 const StyledInputBase = styled(InputBase)(({ theme }) => ({
   color: "inherit",
+  width: "100%",
   "& .MuiInputBase-input": {
     padding: theme.spacing(1, 1, 1, 0),
-    // vertical padding + font size from searchIcon
-    paddingLeft: `calc(1em + ${theme.spacing(4)})`,
     transition: theme.transitions.create("width"),
     width: "100%",
-    [theme.breakpoints.up("md")]: {
-      width: "20ch",
-    },
   },
 }));
 
@@ -73,14 +67,14 @@ const userMenu = [
   { icon: Logout, label: "Đăng xuất" },
 ];
 
-const userMobileMenu = [
-  { icon: messageIcon, label: "Tin nhắn" },
-  { icon: Motorcycle, label: "Thông báo" },
-];
-
-export default function PrimarySearchAppBar() {
+export default function Header() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = useState(null);
+  const [openDrawer, setOpenDrawer] = useState(false);
+
+  const toggleDrawer = (newOpen) => () => {
+    setOpenDrawer(newOpen);
+  };
 
   const isMenuOpen = Boolean(anchorEl);
   const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
@@ -170,39 +164,50 @@ export default function PrimarySearchAppBar() {
 
   return (
     <Box sx={{ flexGrow: 1 }}>
-      <AppBar position="static" sx={{ paddingInline: { xs: 0, sm: '10rem' } }}>
-        <Toolbar sx={{ justifyContent: 'space-between', alignContent: 'center' }}>
+      <AppBar
+        position="static"
+        sx={{
+          paddingInline: { xs: 0, sm: "10rem" },
+          backgroundColor: "white",
+        }}
+      >
+        <Toolbar
+          sx={{ justifyContent: "space-between", alignContent: "center" }}
+        >
           <IconButton
             size="large"
             edge="start"
-            color="inherit"
             aria-label="open drawer"
-            sx={{ mr: 2 }}
+            sx={{
+              color: "var(--main-color)",
+              display: { xs: "block", md: "none" },
+            }}
+            onClick={toggleDrawer(true)}
           >
             <MenuIcon />
           </IconButton>
-          <Typography
-            variant="h6"
-            noWrap
-            component="div"
-            sx={{ display: { xs: "none", sm: "block" } }}
-          >
-            HCMUE
-          </Typography>
+
+          <Box sx={{ width: { xs: 50, md: 100 }, height: { xs: 25, md: 50 } }}>
+            <Image
+              src={logo}
+              alt="logo"
+              style={{ width: "100%", height: "100%" }}
+            />
+          </Box>
 
           <Box sx={{ flexGrow: 1 }} />
-          <Search sx={{ flexGrow: 1 }}>
-            <SearchIconWrapper>
+          <Search sx={{ flexGrow: 1, display: { xs: "none", sm: "flex" } }}>
+            <SearchIconWrapper onClick={() => console.log("search click")}>
               <SearchIcon />
             </SearchIconWrapper>
             <StyledInputBase
-              placeholder="Search…"
+              placeholder="Tìm đường..."
               inputProps={{ "aria-label": "search" }}
             />
           </Search>
           <Box sx={{ flexGrow: 1 }} />
 
-          <Box sx={{ display: { xs: "none", md: "flex" } }}>
+          <Box sx={{ display: { xs: "none", sm: "flex" } }}>
             <IconButton
               size="large"
               aria-label="show 4 new mails"
@@ -210,7 +215,7 @@ export default function PrimarySearchAppBar() {
               sx={{ ml: 2 }}
             >
               <Badge badgeContent={4} color="error">
-                <MailIcon />
+                <Image src={messHeader} alt="icon" width={30} height={30} />
               </Badge>
             </IconButton>
             <IconButton
@@ -220,7 +225,7 @@ export default function PrimarySearchAppBar() {
               sx={{ ml: 2 }}
             >
               <Badge badgeContent={17} color="error">
-                <NotificationsIcon />
+                <Image src={notifHeader} alt="icon" width={30} height={30} />
               </Badge>
             </IconButton>
             <IconButton
@@ -233,22 +238,24 @@ export default function PrimarySearchAppBar() {
               color="inherit"
               sx={{ ml: 2 }}
             >
-              <AccountCircle />
+              <Image src={userHeader} alt="icon" width={30} height={30} />
             </IconButton>
           </Box>
-          <Box sx={{ display: { xs: "flex", md: "none" } }}>
+          <Box sx={{ display: { xs: "flex", sm: "none" } }}>
+            <IconButton
+              size="large"
+              aria-label="show 17 new notifications"
+              sx={{ color: "var(--main-color)" }}
+            >
+              <SearchIcon />
+            </IconButton>
             <IconButton
               size="large"
               aria-label="show 17 new notifications"
               color="inherit"
             >
               <Badge badgeContent={17} color="error">
-                <Image
-                  src={notificationIcon}
-                  alt="icon"
-                  width={20}
-                  height={20}
-                />
+                <Image src={notifHeader} alt="icon" width={20} height={20} />
               </Badge>
             </IconButton>
             <IconButton
@@ -257,7 +264,7 @@ export default function PrimarySearchAppBar() {
               aria-controls={mobileMenuId}
               aria-haspopup="true"
               onClick={handleMobileMenuOpen}
-              color="inherit"
+              sx={{ color: "var(--main-color)" }}
             >
               <MoreIcon />
             </IconButton>
@@ -266,6 +273,13 @@ export default function PrimarySearchAppBar() {
       </AppBar>
       {renderMobileMenu}
       {renderMenu}
+      <Drawer
+        sx={{ display: { xs: "block", sm: "none" } }}
+        open={openDrawer}
+        onClose={toggleDrawer(false)}
+      >
+        <Sidebar toggleDrawer={toggleDrawer} />
+      </Drawer>
     </Box>
   );
 }
