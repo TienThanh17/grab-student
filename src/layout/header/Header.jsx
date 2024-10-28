@@ -143,12 +143,6 @@ export default function Header() {
       open={isMobileMenuOpen}
       onClose={handleMobileMenuClose}
     >
-      <MenuItem onClick={handleMenuClose} sx={{ display: "flex", gap: 2 }}>
-        <Badge badgeContent={4} color="error">
-          <Image src={messageIcon} alt="icon" width={30} height={30} />
-        </Badge>
-        <p>Tin nhắn</p>
-      </MenuItem>
       {userMenu.map((value, index) => (
         <MenuItem
           key={index}
@@ -167,7 +161,7 @@ export default function Header() {
       <AppBar
         position="static"
         sx={{
-          paddingInline: { xs: 0, sm: "10rem" },
+          paddingInline: { xs: 0, sm: "2rem", md: "10rem" },
           backgroundColor: "white",
         }}
       >
@@ -180,7 +174,7 @@ export default function Header() {
             aria-label="open drawer"
             sx={{
               color: "var(--main-color)",
-              display: { xs: "block", md: "none" },
+              display: { sm: "block", md: "none" },
             }}
             onClick={toggleDrawer(true)}
           >
@@ -196,7 +190,12 @@ export default function Header() {
           </Box>
 
           <Box sx={{ flexGrow: 1 }} />
-          <Search sx={{ flexGrow: 1, display: { xs: "none", sm: "flex" } }}>
+          <Search
+            sx={{
+              flexGrow: 1,
+              display: { xs: "none", sm: "none", md: "flex" },
+            }}
+          >
             <SearchIconWrapper onClick={() => console.log("search click")}>
               <SearchIcon />
             </SearchIconWrapper>
@@ -207,7 +206,7 @@ export default function Header() {
           </Search>
           <Box sx={{ flexGrow: 1 }} />
 
-          <Box sx={{ display: { xs: "none", sm: "flex" } }}>
+          <Box sx={{ display: { xs: "none", sm: "none", md: "flex" } }}>
             <IconButton
               size="large"
               aria-label="show 4 new mails"
@@ -241,13 +240,22 @@ export default function Header() {
               <Image src={userHeader} alt="icon" width={30} height={30} />
             </IconButton>
           </Box>
-          <Box sx={{ display: { xs: "flex", sm: "none" } }}>
+          <Box sx={{ display: { xs: "flex", sm: "flex", md: "none" } }}>
             <IconButton
               size="large"
               aria-label="show 17 new notifications"
               sx={{ color: "var(--main-color)" }}
             >
               <SearchIcon />
+            </IconButton>
+            <IconButton
+              size="large"
+              aria-label="show 17 new notifications"
+              color="inherit"
+            >
+              <Badge badgeContent={17} color="error">
+                <Image src={messHeader} alt="icon" width={20} height={20} />
+              </Badge>
             </IconButton>
             <IconButton
               size="large"
@@ -274,7 +282,7 @@ export default function Header() {
       {renderMobileMenu}
       {renderMenu}
       <Drawer
-        sx={{ display: { xs: "block", sm: "none" } }}
+        sx={{ display: { sm: "block", md: "none" } }}
         open={openDrawer}
         onClose={toggleDrawer(false)}
       >

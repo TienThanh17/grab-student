@@ -1,5 +1,7 @@
 import "./globals.css";
-import ThemeProviderWarp from "./provider/themeProvider";
+import ThemeProviderWrapper from "../provider/themeProvider";
+import CssBaseline from "@mui/material/CssBaseline";
+import ReduxProvider from "@/provider/ReduxProvider";
 
 export const metadata = {
   title: "Create Next App",
@@ -10,9 +12,10 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-      <ThemeProviderWarp>
-        {children}
-      </ThemeProviderWarp>
+        <ThemeProviderWrapper>
+          <CssBaseline />
+          <ReduxProvider>{children}</ReduxProvider>
+        </ThemeProviderWrapper>
       </body>
     </html>
   );

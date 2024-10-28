@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+
 import { createTheme, ThemeProvider } from "@mui/material";
 
 const theme = createTheme({
@@ -29,8 +29,8 @@ const theme = createTheme({
   },
 });
 
-const ThemeProviderWarp = ({ children }) => {
+const ThemeProviderWrapper = ({ children }) => {
   return <ThemeProvider theme={theme}>{children}</ThemeProvider>;
 };
 
-export default ThemeProviderWarp;
+export default ThemeProviderWrapper;

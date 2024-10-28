@@ -7,12 +7,12 @@ export default function UserLayout({ children }) {
     <>
       <Header />
       {/* <Container maxWidth='background'> */}
-        <Stack direction='row'>
-          <Box sx={{ display: { xs: "none", sm: "block" } }}>
-            <Sidebar />
-          </Box>
-          <Container >{children}</Container>
-        </Stack>
+      <Stack direction="row">
+        <Box sx={{ display: { xs: "none", sm: "none", md: "block" } }}>
+          <Sidebar />
+        </Box>
+        <Container maxWidth='content'>{children}</Container>
+      </Stack>
       {/* </Container> */}
     </>
   );
