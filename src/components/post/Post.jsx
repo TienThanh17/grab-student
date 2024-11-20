@@ -15,14 +15,14 @@ import { useDispatch } from "react-redux";
 
 export default function Post({ data, handleOpen }) {
   const dispatch = useDispatch();
-
+  
   return (
     <Paper
       elevation={2}
       sx={{
-        width: { xs: 1, md: "725px" },
-        px: { xs: 5, sm: 5, md: 10 },
-        py: { xs: 4, sm: 4, md: 5 },
+        width: 1,
+        px: { xs: 1, sm: 5, md: 10 },
+        py: { xs: 1, sm: 4, md: 5 },
         cursor: "pointer",
         transition: "transform 0.2s, box-shadow 0.2s",
         "&:hover": {
@@ -43,7 +43,7 @@ export default function Post({ data, handleOpen }) {
         >
           <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
             <Image src={data.avatarURL} alt="avt" />
-            <Typography variant="h6" fontSize={{ xs: 14, md: 18 }}>
+            <Typography variant="subtitle1" >
               {data.name}
             </Typography>
           </Stack>
@@ -52,11 +52,11 @@ export default function Post({ data, handleOpen }) {
             label={data.rating}
           />
         </Stack>
-        <Typography variant="h6" fontSize={{ xs: 14, md: 16 }}>
+        <Typography variant="subtitle1" >
           {data.comment}
         </Typography>
 
-        <Grid container columnSpacing={2}>
+        <Grid container columnSpacing={{xs: 0, sm: 2}}>
           <Grid size={8}>
             <Typography
               variant="subtitle1"
@@ -72,7 +72,7 @@ export default function Post({ data, handleOpen }) {
           <Grid size={3}></Grid>
 
           <Grid size={8}>
-            <Typography variant="h6" fontSize={{ xs: 14, md: 16 }}>
+            <Typography variant="subtitle1" fontSize={{ xs: 14, md: 16 }}>
               {data.from}
             </Typography>
           </Grid>
@@ -85,8 +85,11 @@ export default function Post({ data, handleOpen }) {
               spacing={{ xs: 0, md: 2 }}
               sx={{ alignItems: "center" }}
             >
-              <WatchLaterIcon sx={{ color: "#FE7171" }} />
-              <Typography variant="h6" fontSize={{ xs: 14, md: 16 }}>
+              <WatchLaterIcon 
+                // sx={{ color: "#FE7171" }} 
+                color='primary'
+              />
+              <Typography variant="subtitle1" fontSize={{ xs: 14, md: 16 }}>
                 {data.time}
               </Typography>
             </Stack>
@@ -115,7 +118,7 @@ export default function Post({ data, handleOpen }) {
           <Grid size={3}></Grid>
 
           <Grid size={8}>
-            <Typography variant="h6" fontSize={{ xs: 14, md: 16 }}>
+            <Typography variant="subtitle1" fontSize={{ xs: 14, md: 16 }}>
               {data.to}
             </Typography>
           </Grid>
@@ -128,8 +131,8 @@ export default function Post({ data, handleOpen }) {
               spacing={{ xs: 0, md: 2 }}
               sx={{ alignItems: "center" }}
             >
-              <CalendarMonthIcon sx={{ color: "#FE7171" }} />
-              <Typography variant="h6" fontSize={{ xs: 13, md: 16 }}>
+              <CalendarMonthIcon color='primary' />
+              <Typography variant="subtitle1" fontSize={{ xs: 13, md: 16 }}>
                 {data.date}
               </Typography>
             </Stack>

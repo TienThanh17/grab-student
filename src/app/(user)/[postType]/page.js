@@ -6,8 +6,8 @@ import { useEffect, useState } from "react";
 import Stack from "@mui/material/Stack";
 import Modal from "@mui/material/Modal";
 import { postsData } from "@/utils/fakeData";
-import Post from "@/components/Post";
-import PostDetail from "@/components/PostDetail";
+import Post from "@/components/post/Post";
+import PostDetail from "@/components/post/PostDetail";
 
 export default function PostPage() {
   const [posts, setPosts] = useState([]);
@@ -39,7 +39,7 @@ export default function PostPage() {
         aria-labelledby="modal-modal-title"
         aria-describedby="modal-modal-description"
       >
-        <PostDetail />
+        <PostDetail handleClose={handleClose} />
       </Modal>
     </>
   );

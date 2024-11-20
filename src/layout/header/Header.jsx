@@ -14,6 +14,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import MoreIcon from "@mui/icons-material/MoreVert";
 import Drawer from "@mui/material/Drawer";
 import { InputBase } from "@mui/material";
+import Modal from "@mui/material/Modal";
 
 import userIcon from "@/public/images/User.png";
 import Inquiry from "@/public/images/Inquiry.png";
@@ -25,55 +26,27 @@ import logo from "@/public/images/logo.png";
 import userHeader from "@/public/images/userHeader.png";
 import messHeader from "@/public/images/messHeader.png";
 import notifHeader from "@/public/images/notifHeader.png";
+import add from "@/public/images/Add.png";
 import Sidebar from "../sidebar/Sidebar";
-
-const Search = styled("div")(({ theme }) => ({
-  borderRadius: theme.shape.borderRadius,
-  border: "solid 1px black",
-  backgroundColor: alpha(theme.palette.common.white, 0.15),
-  "&:hover": {
-    backgroundColor: alpha(theme.palette.common.white, 0.25),
-  },
-  marginLeft: 0,
-  width: "100%",
-  color: "black",
-  [theme.breakpoints.up("sm")]: {
-    width: "auto",
-  },
-}));
-
-const SearchIconWrapper = styled("div")(({ theme }) => ({
-  padding: theme.spacing(0, 1),
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  cursor: "pointer",
-}));
-
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  color: "inherit",
-  width: "100%",
-  "& .MuiInputBase-input": {
-    padding: theme.spacing(1, 1, 1, 0),
-    transition: theme.transitions.create("width"),
-    width: "100%",
-  },
-}));
-
-const userMenu = [
-  { icon: userIcon, label: "Thông tin cá nhân" },
-  { icon: Motorcycle, label: "Bài đăng của tôi" },
-  { icon: Inquiry, label: "Yêu cầu chở" },
-  { icon: Logout, label: "Đăng xuất" },
-];
+import PostCreation from "@/components/post/PostCreation";
 
 export default function Header() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = useState(null);
   const [openDrawer, setOpenDrawer] = useState(false);
+  const [openPostCreation, setOpenPostCreation] = useState(false);
 
   const toggleDrawer = (newOpen) => () => {
     setOpenDrawer(newOpen);
+  };
+
+  const handleClosePostCreation = () => {
+    setOpenPostCreation(false);
+  };
+
+  const handleOpenPostCreation = () => {
+    handleMenuClose();
+    setOpenPostCreation(true);
   };
 
   const isMenuOpen = Boolean(anchorEl);
@@ -96,6 +69,14 @@ export default function Header() {
     setMobileMoreAnchorEl(event.currentTarget);
   };
 
+  const userMenu = [
+    { icon: add, label: "Tạo bài đăng", handle: handleOpenPostCreation },
+    { icon: userIcon, label: "Thông tin cá nhân", handle: handleMenuClose },
+    { icon: Motorcycle, label: "Bài đăng của tôi", handle: handleMenuClose },
+    { icon: Inquiry, label: "Yêu cầu chở", handle: handleMenuClose },
+    { icon: Logout, label: "Đăng xuất", handle: handleMenuClose },
+  ];
+
   const menuId = "primary-search-account-menu";
   const renderMenu = (
     <Menu
@@ -116,7 +97,7 @@ export default function Header() {
       {userMenu.map((value, index) => (
         <MenuItem
           key={index}
-          onClick={handleMenuClose}
+          onClick={value.handle}
           sx={{ display: "flex", gap: 2 }}
         >
           <Image src={value.icon} alt="icon" width={30} height={30} />
@@ -146,7 +127,7 @@ export default function Header() {
       {userMenu.map((value, index) => (
         <MenuItem
           key={index}
-          onClick={handleMenuClose}
+          onClick={value.handle}
           sx={{ display: "flex", gap: 2 }}
         >
           <Image src={value.icon} alt="icon" width={30} height={30} />
@@ -288,6 +269,42 @@ export default function Header() {
       >
         <Sidebar toggleDrawer={toggleDrawer} />
       </Drawer>
+      <Modal open={openPostCreation} onClose={handleClosePostCreation}>
+        <PostCreation handleClosePostCreation={handleClosePostCreation} />
+      </Modal>
     </Box>
   );
 }
+
+const Search = styled("div")(({ theme }) => ({
+  borderRadius: theme.shape.borderRadius,
+  border: "solid 1px black",
+  backgroundColor: alpha(theme.palette.common.white, 0.15),
+  "&:hover": {
+    backgroundColor: alpha(theme.palette.common.white, 0.25),
+  },
+  marginLeft: 0,
+  width: "100%",
+  color: "black",
+  [theme.breakpoints.up("sm")]: {
+    width: "auto",
+  },
+}));
+
+const SearchIconWrapper = styled("div")(({ theme }) => ({
+  padding: theme.spacing(0, 1),
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+}));
+
+const StyledInputBase = styled(InputBase)(({ theme }) => ({
+  color: "inherit",
+  width: "100%",
+  "& .MuiInputBase-input": {
+    padding: theme.spacing(1, 1, 1, 0),
+    transition: theme.transitions.create("width"),
+    width: "100%",
+  },
+}));

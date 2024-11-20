@@ -11,7 +11,9 @@ export default function UserLayout({ children }) {
         <Box sx={{ display: { xs: "none", sm: "none", md: "block" } }}>
           <Sidebar />
         </Box>
-        <Container maxWidth='content'>{children}</Container>
+        <Container maxWidth="content" sx={{ px: { xs: 0, sm: 10 } }}>
+          {children}
+        </Container>
       </Stack>
       {/* </Container> */}
     </>

@@ -2,6 +2,7 @@ import "./globals.css";
 import ThemeProviderWrapper from "../provider/themeProvider";
 import CssBaseline from "@mui/material/CssBaseline";
 import ReduxProvider from "@/provider/ReduxProvider";
+import DatePickerProvider from "@/provider/DatePickerProvider";
 
 export const metadata = {
   title: "Create Next App",
@@ -13,8 +14,10 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <ThemeProviderWrapper>
-          <CssBaseline />
-          <ReduxProvider>{children}</ReduxProvider>
+          <DatePickerProvider>
+            <CssBaseline />
+            <ReduxProvider>{children}</ReduxProvider>
+          </DatePickerProvider>
         </ThemeProviderWrapper>
       </body>
     </html>
