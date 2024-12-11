@@ -15,6 +15,11 @@ import { useDebouncedState } from "@/utils/customHook";
 import mapboxgl from "mapbox-gl";
 import Mapbox from "@/components/mapbox/Mapbox";
 import { getSuggestPlaceService, getDirectionService } from "./../../services/mapService";
+import {createPostService} from '@/services/postService'
+import { useSelector } from 'react-redux';
+import { useSnackbar } from "notistack";
+
+
 
 const postTypeSelect = [
   {
@@ -63,6 +68,8 @@ function PostCreation({ handleClosePostCreation }) {
   const destinationTextRef = useRef('');
   const popperDestinationRef = useRef(null);
   const popperStartingRef = useRef(null);
+  const userId = useSelector((state) => state.user.userInfo.id)
+  const { enqueueSnackbar } = useSnackbar();
 
   // useEffect(() => {
   //   // console.log(dayjs(date).format("DD-MM-YYYY"));
@@ -207,29 +214,58 @@ function PostCreation({ handleClosePostCreation }) {
     setIsAddDestinationMarker(false)
   };
 
-  const handleClickSubmit = () => {
+  const handleSubmit = async () => {
     if (startingTextRef.current.trim() !== '' &&
       destinationTextRef.current.trim() !== '' &&
       retrieveStarting.length !== 0 &&
       retrieveDestination.length !== 0 &&
       postType !== null &&
       date !== null &&
-      time !== null &&
-      text.trim() !== ''
+      time !== null
     ) {
-      console.log({
-        starting: startingTextRef.current,
-        destination: destinationTextRef.current,
-        lon: retrieveStarting,
-        lat: retrieveDestination,
-        postType: postType,
-        date: dayjs(date).format("DD-MM-YYYY"),
-        time: dayjs(time).format("hh:mm"),
-        text: text
-      })
+      // console.log({
+      //   starting: startingTextRef.current,
+      //   destination: destinationTextRef.current,
+      //   lon: retrieveStarting,
+      //   lat: retrieveDestination,
+      //   postType: postType,
+      //   date: dayjs(date).format("DD-MM-YYYY"),
+      //   time: dayjs(time).format("hh:mm"),
+      //   content: text
+      // })
+      try {
+        const formData = {
+          studentId: userId,
+          pickUpLocation: startingTextRef.current,
+          dropOffLocation: destinationTextRef.current,
+          type: postType,
+          pickUpLat: retrieveStarting[1],
+          pickUpLon: retrieveStarting[0],
+          dropOffLat: retrieveDestination[1],
+          dropOffLon: retrieveDestination[0],
+          startDate: dayjs(date).format("DD-MM-YYYY"),
+          startTimeString: dayjs(time).format("hh:mm"),
+          status: true,
+          content: text
+        };
+        const res = await createPostService(formData);
+        if(res.data.code === 0) {
+          handleClosePostCreation()
+        }
+      } catch (error) {
+        enqueueSnackbar(
+          "Tạo không thành công",
+          { variant: "error" }
+        );
+      }
     } else {
-      console.log('missing param')
+      // console.log('missing param')
+      enqueueSnackbar(
+        "Nhập chưa đủ thông tin",
+        { variant: "error" }
+      );
     }
+    console.log('startingTextRef', startingTextRef.current)
   }
 
   useEffect(() => {
@@ -307,8 +343,10 @@ function PostCreation({ handleClosePostCreation }) {
         height: { xs: 1, sm: 1, md: "auto" },
         bgcolor: "background.paper",
         boxShadow: 24,
-        p: { sm: 0, md: 4 },
+        px: { sm: 0, md: 4 },
+        py: { sm: 0, md: 4 },
         borderRadius: { sm: 0, md: 3 },
+        overflowY: "auto"
       }}
     >
       <Stack direction="row">
@@ -318,7 +356,7 @@ function PostCreation({ handleClosePostCreation }) {
         <CancelIcon
           sx={{
             color: "silver",
-            fontSize: { xs: 30, md: 40 },
+            fontSize: { xs: 30, md: 30 },
             cursor: "pointer",
           }}
           onClick={handleClosePostCreation}
@@ -404,7 +442,7 @@ function PostCreation({ handleClosePostCreation }) {
             }}
           >
             {postTypeSelect.map((item) => (
-              <MenuItem key={item.id} value={item.value}>
+              <MenuItem key={item.id} value={item.id}>
                 {item.value}
               </MenuItem>
             ))}
@@ -440,18 +478,14 @@ function PostCreation({ handleClosePostCreation }) {
               },
             }}
           />
-        </Stack>
-      </Stack>
-      <Stack direction="row" sx={{ mt: 2, justifyContent: "center" }}>
-        <Stack sx={{ gap: 2, width: "60%" }}>
           <TextField
-            placeholder="Thêm nội dung văn bản..."
+            placeholder="Thêm nội dung..."
             multiline
             minRows={3}
             value={text}
             onChange={handleChangeText}
           />
-          <Button variant="contained" onClick={handleClickSubmit}>Đăng</Button>
+          <Button variant="contained" onClick={handleSubmit}>Đăng</Button>
         </Stack>
       </Stack>
       <Popper

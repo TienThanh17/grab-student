@@ -270,16 +270,19 @@ function PostDetail({ handleClose }) {
   }, [retrieveStarting, retrieveDestination]);
 
   return (
-    <Box sx={{  position: "absolute",
+    <Box sx={{  
+      position: "absolute",
       top: "50%",
       left: "50%",
       transform: "translate(-50%, -50%)",
-      width: { xs: 1, sm: 1, md: "60%", lg: "50%", xl: "50%" },
+      width: { xs: 1, sm: 1, md: "60%", lg: "60%", xl: "50%" },
       height: { xs: 1, sm: 1, md: "auto" },
       bgcolor: "background.paper",
       boxShadow: 24,
       p: { sm: 0, md: 4 },
-      borderRadius: { sm: 0, md: 9 }}}
+      borderRadius: { sm: 0, md: 9 },
+      overflowY: "auto"
+      }}
     >
       <Grid
         container
@@ -473,7 +476,7 @@ function PostDetail({ handleClose }) {
             }}
             onClick={sendRequest}
           >
-            Gửi yêu cầu
+            {postData.type === 'rider' ? 'Gửi yêu cầu' : 'Chấp nhận yêu cầu'}
           </Button>
           <TextField
             label="Gửi tin nhắn"

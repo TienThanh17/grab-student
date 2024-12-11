@@ -15,12 +15,19 @@ import { useDispatch } from "react-redux";
 
 export default function Post({ data, handleOpen }) {
   const dispatch = useDispatch();
-  
+
+  const handleClickPost = () => {
+    if (handleOpen) {
+      dispatch(setPostData(data));
+      handleOpen();
+    }
+  }
+
   return (
     <Paper
-      elevation={2}
+      elevation={4}
       sx={{
-        width: 1,
+        width: '90%',
         px: { xs: 1, sm: 5, md: 10 },
         py: { xs: 1, sm: 4, md: 5 },
         cursor: "pointer",
@@ -29,11 +36,9 @@ export default function Post({ data, handleOpen }) {
           transform: "translateY(-5px)", // Phóng to nhẹ khi hover
           boxShadow: (theme) => theme.shadows[6], // Tăng độ đổ bóng khi hover
         },
+        borderRadius: 5
       }}
-      onClick={() => {
-        dispatch(setPostData(data));
-        handleOpen();
-      }}
+      onClick={handleClickPost}
     >
       <Stack spacing={3}>
         <Stack
@@ -42,21 +47,21 @@ export default function Post({ data, handleOpen }) {
           sx={{ alignItems: "center", justifyContent: "space-between" }}
         >
           <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-            <Image src={data.avatarURL} alt="avt" />
-            <Typography variant="subtitle1" >
-              {data.name}
+            <img src={data.student.avatarUrl} alt="avt" style={{width: '3rem', height: '3rem'}}/>
+            <Typography variant="subtitle1" sx={{}}>
+              {data.student.name}
             </Typography>
           </Stack>
           <Chip
             icon={<StarRoundedIcon sx={{ color: "gold !important" }} />}
-            label={data.rating}
+            label={data.rating ?? null}
           />
         </Stack>
         <Typography variant="subtitle1" >
-          {data.comment}
+          {data.content}
         </Typography>
 
-        <Grid container columnSpacing={{xs: 0, sm: 2}}>
+        <Grid container columnSpacing={{ xs: 0, sm: 2 }}>
           <Grid size={8}>
             <Typography
               variant="subtitle1"
@@ -73,7 +78,7 @@ export default function Post({ data, handleOpen }) {
 
           <Grid size={8}>
             <Typography variant="subtitle1" fontSize={{ xs: 14, md: 16 }}>
-              {data.from}
+              {data.pickUpLocation}
             </Typography>
           </Grid>
           <Grid size={1}>
@@ -85,12 +90,12 @@ export default function Post({ data, handleOpen }) {
               spacing={{ xs: 0, md: 2 }}
               sx={{ alignItems: "center" }}
             >
-              <WatchLaterIcon 
+              <WatchLaterIcon
                 // sx={{ color: "#FE7171" }} 
                 color='primary'
               />
               <Typography variant="subtitle1" fontSize={{ xs: 14, md: 16 }}>
-                {data.time}
+                {data.startTimeString}
               </Typography>
             </Stack>
           </Grid>
@@ -119,7 +124,7 @@ export default function Post({ data, handleOpen }) {
 
           <Grid size={8}>
             <Typography variant="subtitle1" fontSize={{ xs: 14, md: 16 }}>
-              {data.to}
+              {data.dropOffLocation}
             </Typography>
           </Grid>
           <Grid size={1}>
@@ -133,7 +138,7 @@ export default function Post({ data, handleOpen }) {
             >
               <CalendarMonthIcon color='primary' />
               <Typography variant="subtitle1" fontSize={{ xs: 13, md: 16 }}>
-                {data.date}
+                {data.startDate}
               </Typography>
             </Stack>
           </Grid>

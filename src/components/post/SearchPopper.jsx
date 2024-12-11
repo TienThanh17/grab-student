@@ -15,8 +15,6 @@ function SearchPopper({
 }) {
   const { enqueueSnackbar } = useSnackbar();
 
-  // placeRef.current='my ref'
-
   const handleGetMyLocation = () => {
     navigator.geolocation.getCurrentPosition(
       (position) => {
@@ -24,6 +22,7 @@ function SearchPopper({
         const latitude = position.coords.latitude;
         console.log(`Vị trí của bạn: ${longitude},${latitude}`);
         setRetrieve([longitude, latitude]);
+        placeRef.current = `[${longitude} , ${latitude}]`
         setPlaceName("Vị trí của bạn");
         setOpenPopper(false);
         setIsAddMarker(true);

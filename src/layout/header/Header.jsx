@@ -29,6 +29,7 @@ import notifHeader from "@/public/images/notifHeader.png";
 import add from "@/public/images/Add.png";
 import Sidebar from "../sidebar/Sidebar";
 import PostCreation from "@/components/post/PostCreation";
+import { useRouter } from 'next/navigation';
 
 export default function Header() {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -36,17 +37,14 @@ export default function Header() {
   const [openDrawer, setOpenDrawer] = useState(false);
   const [openPostCreation, setOpenPostCreation] = useState(false);
 
+  const router = useRouter();
+
   const toggleDrawer = (newOpen) => () => {
     setOpenDrawer(newOpen);
   };
 
   const handleClosePostCreation = () => {
     setOpenPostCreation(false);
-  };
-
-  const handleOpenPostCreation = () => {
-    handleMenuClose();
-    setOpenPostCreation(true);
   };
 
   const isMenuOpen = Boolean(anchorEl);
@@ -69,12 +67,37 @@ export default function Header() {
     setMobileMoreAnchorEl(event.currentTarget);
   };
 
+  const handleOpenPostCreation = () => {
+    handleMenuClose();
+    setOpenPostCreation(true);
+  };
+
+  const handleClickMyPost = () => {
+    handleMenuClose();
+    router.push(`my-post`);
+  }
+
+  const handleClickProfile = () => {
+    handleMenuClose();
+    router.push(`profile`);
+  }
+
+  const handleClickRequest = () => {
+    handleMenuClose();
+    router.push(`request`);
+  }
+
+  const handleClickLogout = () => {
+    handleMenuClose();
+    router.push(`/`);
+  }
+
   const userMenu = [
     { icon: add, label: "Tạo bài đăng", handle: handleOpenPostCreation },
-    { icon: userIcon, label: "Thông tin cá nhân", handle: handleMenuClose },
-    { icon: Motorcycle, label: "Bài đăng của tôi", handle: handleMenuClose },
-    { icon: Inquiry, label: "Yêu cầu chở", handle: handleMenuClose },
-    { icon: Logout, label: "Đăng xuất", handle: handleMenuClose },
+    { icon: userIcon, label: "Thông tin cá nhân", handle: handleClickProfile },
+    { icon: Motorcycle, label: "Bài đăng của tôi", handle: handleClickMyPost },
+    { icon: Inquiry, label: "Yêu cầu chở", handle: handleClickRequest },
+    { icon: Logout, label: "Đăng xuất", handle: handleClickLogout },
   ];
 
   const menuId = "primary-search-account-menu";
@@ -93,6 +116,7 @@ export default function Header() {
       }}
       open={isMenuOpen}
       onClose={handleMenuClose}
+      disableScrollLock={true}
     >
       {userMenu.map((value, index) => (
         <MenuItem
@@ -123,6 +147,7 @@ export default function Header() {
       }}
       open={isMobileMenuOpen}
       onClose={handleMobileMenuClose}
+      disableScrollLock={true}
     >
       {userMenu.map((value, index) => (
         <MenuItem
@@ -138,7 +163,7 @@ export default function Header() {
   );
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={{ flexGrow: 1, position: 'fixed', width: 1, zIndex: 999 }}>
       <AppBar
         position="static"
         sx={{
