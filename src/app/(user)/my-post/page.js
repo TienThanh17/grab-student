@@ -12,10 +12,11 @@ import TwoWheelerIcon from "@mui/icons-material/TwoWheeler";
 import TimerIcon from '@mui/icons-material/Timer';
 import CalendarMonth from "@mui/icons-material/CalendarMonth";
 import Post from '@/components/post/Post';
-import { postsData } from "@/utils/fakeData";
 import dayjs from 'dayjs'
 import { DateRangePicker } from '@mui/x-date-pickers-pro/DateRangePicker';
 import { SingleInputDateRangeField } from '@mui/x-date-pickers-pro/SingleInputDateRangeField';
+import { getMyPostService } from '@/services/postService'
+
 
 const postTypeSelect = [
   {
@@ -57,15 +58,28 @@ function MyPost() {
     setIsExpired(event.target.value);
   };
 
+  const fetchPosts = async () => {
+    try {
+      const res = await getMyPostService(
+        postType, 
+        isExpired === 'expiry' ? false : true, 
+        dayjs(dateRange[0]).format("YYYY-MM-DD"), 
+        dayjs(dateRange[1]).format("YYYY-MM-DD")
+      );
+      setPosts(res.data.data);
+    } catch (error) {
+      console.log(error)
+    } finally {
+
+    }
+  }
+
   const handleConfirm = () => {
     // Logic xác nhận
     console.log('Đã xác nhận:', { postType, isExpired, dateRange });
+    fetchPosts();
   };
 
-  useEffect(() => {
-    //call api
-    setPosts(postsData);
-  }, []);
 
   return (
     <Stack sx={{ width: 1, mt: 2, alignItems: 'center' }}>
@@ -160,10 +174,10 @@ function MyPost() {
                 },
               },
               popper: {
-      sx: {
-        zIndex: 900,
-      },
-    },
+                sx: {
+                  zIndex: 900,
+                },
+              },
             }}
           />
         </Stack>
@@ -174,7 +188,7 @@ function MyPost() {
             onClick={handleConfirm}
             sx={{ width: '30%' }}
           >
-            Xác nhận
+            Lọc
           </Button>
         </Box>
       </Paper>

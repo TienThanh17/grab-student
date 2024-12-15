@@ -19,3 +19,21 @@ export const verifyOtpService = ({ email, otp }) => {
     return axios.post('/student/verifyOtp', null, { params });
 }
 
+export const update2fa = (id, isEnabled) => {
+    const params = {
+        id: id,
+        isEnabled: isEnabled
+    }
+    return axios.put('/student/update2fa', null, { params });
+}
+
+export const changePasswordService = ({ id, currentPassword, newPassword }) => {
+
+    return axios.put(`/student/updatePassword/${id}`,
+        {
+            password: currentPassword,
+            newPassword: newPassword
+        }
+    );
+}
+

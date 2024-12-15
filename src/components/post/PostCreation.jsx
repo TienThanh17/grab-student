@@ -57,7 +57,7 @@ function PostCreation({ handleClosePostCreation }) {
   const [retrieveDestination, setRetrieveDestination] = useState([]);
   const [isAddStartingMarker, setIsAddStartingMarker] = useState(false);
   const [isAddDestinationMarker, setIsAddDestinationMarker] = useState(false);
-  const [postType, setPostType] = useState(postTypeSelect[0].value);
+  const [postType, setPostType] = useState(postTypeSelect[0].id);
   const [date, setDate] = useState(null);
   const [time, setTime] = useState(null);
   const [text, setText] = useState("");
@@ -243,13 +243,17 @@ function PostCreation({ handleClosePostCreation }) {
           pickUpLon: retrieveStarting[0],
           dropOffLat: retrieveDestination[1],
           dropOffLon: retrieveDestination[0],
-          startDate: dayjs(date).format("DD-MM-YYYY"),
+          startDate: dayjs(date).format("YYYY-MM-DD"), 
           startTimeString: dayjs(time).format("hh:mm"),
           status: true,
           content: text
         };
         const res = await createPostService(formData);
         if(res.data.code === 0) {
+          enqueueSnackbar(
+            "Tạo thành công",
+            { variant: "success" }
+          );
           handleClosePostCreation()
         }
       } catch (error) {
@@ -265,7 +269,6 @@ function PostCreation({ handleClosePostCreation }) {
         { variant: "error" }
       );
     }
-    console.log('startingTextRef', startingTextRef.current)
   }
 
   useEffect(() => {

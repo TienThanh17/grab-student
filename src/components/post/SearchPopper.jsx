@@ -2,7 +2,7 @@ import { Button, Stack, Typography } from "@mui/material";
 // import { searchData } from "@/utils/fakeData";
 import PlaceIcon from "@mui/icons-material/Place";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
-import { retrievePlaceService } from "@/services/mapService";
+import { getPlaceService, retrievePlaceService } from "@/services/mapService";
 import { useSnackbar } from "notistack";
 
 function SearchPopper({
@@ -15,14 +15,15 @@ function SearchPopper({
 }) {
   const { enqueueSnackbar } = useSnackbar();
 
-  const handleGetMyLocation = () => {
+  const handleGetMyLocation = async () => {
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const longitude = position.coords.longitude;
         const latitude = position.coords.latitude;
         console.log(`Vị trí của bạn: ${longitude},${latitude}`);
         setRetrieve([longitude, latitude]);
-        placeRef.current = `[${longitude} , ${latitude}]`
+        const res = await getPlaceService(longitude, latitude);
+        placeRef.current = res.data.features[0].properties.full_address;
         setPlaceName("Vị trí của bạn");
         setOpenPopper(false);
         setIsAddMarker(true);
@@ -62,7 +63,7 @@ function SearchPopper({
     try {
       const res = await retrievePlaceService(item.mapbox_id);
       // console.log(res.data.features[0].geometry.coordinates)
-      placeRef.current=item.name
+      placeRef.current=item.name + ', ' + item.full_address;
       setRetrieve(res.data.features[0].geometry.coordinates);
       setPlaceName(item.name);
       setOpenPopper(false);
@@ -123,7 +124,7 @@ function SearchPopper({
               color="primary"
               sx={{ fontWeight: "bold" }}
             >
-              {value.name}
+              {value.name} 
             </Typography>
             <Typography variant="subtitle1" color="primary">
               {value.full_address}

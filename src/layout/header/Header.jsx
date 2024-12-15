@@ -30,12 +30,17 @@ import add from "@/public/images/Add.png";
 import Sidebar from "../sidebar/Sidebar";
 import PostCreation from "@/components/post/PostCreation";
 import { useRouter } from 'next/navigation';
+import { useDispatch } from "react-redux";
+import { logout } from '@/redux-toolkit/userSlice';
+import Cookies from "js-cookie";
+
 
 export default function Header() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = useState(null);
   const [openDrawer, setOpenDrawer] = useState(false);
   const [openPostCreation, setOpenPostCreation] = useState(false);
+  const dispatch = useDispatch();
 
   const router = useRouter();
 
@@ -89,6 +94,8 @@ export default function Header() {
 
   const handleClickLogout = () => {
     handleMenuClose();
+    dispatch(logout());
+
     router.push(`/`);
   }
 

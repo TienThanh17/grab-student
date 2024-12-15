@@ -5,12 +5,12 @@ import '@/styles/loading.css'
 import { Dialog } from '@mui/material'
 import { useSelector } from 'react-redux';
 
-function Loading() {
+function Loading({ loadingLocal }) {
     const isLoading = useSelector((state) => state.loading.isLoading)
 
     return (
         /* From Uiverse.io by Fareny */
-        <Dialog open={isLoading}>
+        <Dialog open={loadingLocal === undefined ? isLoading : loadingLocal}>
             <div class="loader">
                 <figure class="iconLoaderProgress">
                     <svg class="iconLoaderProgressFirst" width="240" height="240">

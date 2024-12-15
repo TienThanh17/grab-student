@@ -21,9 +21,7 @@ import { verifyOtpService, sendOtpService, loginService } from '@/services/userS
 import Cookies from 'js-cookie';
 import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from 'react-redux';
-import { login, logout } from '@/redux-toolkit/userSlice';
-import { setIsLoading } from '@/redux-toolkit/loadingSlice';
-
+import { login } from '@/redux-toolkit/userSlice';
 
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -104,11 +102,6 @@ const Login = () => {
     const togglePasswordVisibility = () => {
         setShowPassword(!showPassword);
     };
-
-    const check2Layer = () => {
-        //call api
-        return true;
-    }
 
     const handleEmailSubmit = async (e) => {
         try {
