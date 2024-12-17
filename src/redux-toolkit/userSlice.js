@@ -11,8 +11,10 @@ const userSlice = createSlice({
 
   reducers: {
     login(state, action) {
-      state.userInfo = action.payload;
+      state.userInfo = action.payload.studentInfo;
       state.isLogin = true;
+      Cookies.set('accessToken', action.payload.accessToken, { expires: 7 });
+      Cookies.set('refreshToken', action.payload.refreshToken, { expires: 7 });
     },
     logout(state, action) {
       state.userInfo = null

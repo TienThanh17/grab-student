@@ -38,18 +38,16 @@ const userPersistConfig = {
     whitelist: ["isLogin", "userInfo"],
 };
 
+const persistedUserReducer = persistReducer(userPersistConfig, userSlice);
+
 const rootReducer = combineReducers({
-    user: userSlice
+    post: postSlice, // Không cần persist
+    user: persistedUserReducer, // Chỉ userSlice được persist
+    loading: loadingSlice, // Không cần persist
 })
 
-const persistedUserReducer = persistReducer(userPersistConfig,rootReducer );
-
 export const store = configureStore({
-    reducer: {
-        post: postSlice,
-        user: persistedUserReducer,
-        loading: loadingSlice
-    },
+    reducer: rootReducer,
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware({
             serializableCheck: {

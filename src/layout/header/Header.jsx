@@ -95,8 +95,6 @@ export default function Header() {
   const handleClickLogout = () => {
     handleMenuClose();
     dispatch(logout());
-
-    router.push(`/`);
   }
 
   const userMenu = [

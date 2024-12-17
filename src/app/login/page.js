@@ -118,14 +118,11 @@ const Login = () => {
                 password
             });
             if (res.status === 200) {
-                Cookies.set('accessToken', res.data.accessToken, { expires: 7 });
-                Cookies.set('refreshToken', res.data.refreshToken, { expires: 7 });
                 if (!res.data.studentInfo.is2faEnabled) {
-                    dispatch(login(res.data.studentInfo));
+                    dispatch(login(res.data));
                     router.push('/rider');
                 } else {
                     const otpRes = await sendOtpService(email);
-                    // console.log(otpRes.data)
                     setShowOTP(true);
                 }
             }

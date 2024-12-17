@@ -12,11 +12,10 @@ export default function ReduxProvider({ children }) {
   }, []);
 
   return (
-  <Provider store={store}>
-    <PersistGate loading={null} persistor={persistor}
-    >
-      {children}
-    </PersistGate>
-  </Provider>
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        {children}
+      </PersistGate>
+    </Provider>
   )
 }
