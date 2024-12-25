@@ -13,7 +13,6 @@ import {getPostService} from '@/services/postService'
 import { useSelector } from 'react-redux';
 import PostSkeleton from "@/components/loading/PostSkeleton";
 
-
 export default function PostPage() {
   const [posts, setPosts] = useState([]);
   const [open, setOpen] = useState(false);
@@ -33,7 +32,7 @@ export default function PostPage() {
     const fetchPosts = async () => {
       setLoading(true)
       try {
-        const res = await getPostService(userId, params.postType);
+        const res = await getPostService(userId, params.postType, true);
         setPosts(res.data.data);
       } catch(error) {
         console.log(error)

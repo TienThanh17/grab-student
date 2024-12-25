@@ -15,6 +15,7 @@ import MoreIcon from "@mui/icons-material/MoreVert";
 import Drawer from "@mui/material/Drawer";
 import { InputBase } from "@mui/material";
 import Modal from "@mui/material/Modal";
+import FeedIcon from '@mui/icons-material/Feed';
 
 import userIcon from "@/public/images/User.png";
 import Inquiry from "@/public/images/Inquiry.png";
@@ -22,6 +23,7 @@ import Motorcycle from "@/public/images/Motorcycle.png";
 import Logout from "@/public/images/Logout.png";
 import Image from "next/image";
 import messageIcon from "@/public/images/Chat Message.png";
+import news from "@/public/images/News.png";
 import logo from "@/public/images/logo.png";
 import userHeader from "@/public/images/userHeader.png";
 import messHeader from "@/public/images/messHeader.png";
@@ -92,6 +94,11 @@ export default function Header() {
     router.push(`request`);
   }
 
+  const handleClickRide = () => {
+    handleMenuClose();
+    router.push(`ride`);
+  }
+
   const handleClickLogout = () => {
     handleMenuClose();
     dispatch(logout());
@@ -100,8 +107,9 @@ export default function Header() {
   const userMenu = [
     { icon: add, label: "Tạo bài đăng", handle: handleOpenPostCreation },
     { icon: userIcon, label: "Thông tin cá nhân", handle: handleClickProfile },
-    { icon: Motorcycle, label: "Bài đăng của tôi", handle: handleClickMyPost },
-    { icon: Inquiry, label: "Yêu cầu chở", handle: handleClickRequest },
+    { icon: news, label: "Bài đăng của tôi", handle: handleClickMyPost },
+    { icon: Motorcycle, label: "Chuyến xe", handle: handleClickRide },
+    // { icon: Inquiry, label: "Yêu cầu chở", handle: handleClickRequest },
     { icon: Logout, label: "Đăng xuất", handle: handleClickLogout },
   ];
 

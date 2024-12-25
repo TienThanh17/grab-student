@@ -1,8 +1,14 @@
 import axios from '@/configs/axios';
 
-export const getPostService = (userId, postType) => {
+export const getPostByIdService = (id) => {
+
+    return axios.get(`posts/${id}`);
+}
+
+export const getPostService = (userId, postType, status) => {
     const params = {
-        userId
+        userId,
+        status
     }
     return axios.get(`posts/${postType}`, { params });
 }

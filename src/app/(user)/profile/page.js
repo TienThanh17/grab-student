@@ -4,7 +4,6 @@ import { Paper, Box, Typography, Stack, Rating, TableContainer, Table, TableRow,
 import Switch from '@mui/material/Switch';
 import { useState } from 'react'
 import Image from "next/image";
-import userHeader from '@/public/images/userHeader.png'
 import { useSelector, useDispatch } from 'react-redux';
 import { changePasswordService, update2fa } from '@/services/userService';
 import { useSnackbar } from 'notistack';
@@ -12,6 +11,7 @@ import { updateUser2fa } from '@/redux-toolkit/userSlice';
 import Loading from '@/components/loading/Loading';
 import KeyIcon from '@mui/icons-material/Key';
 import LockIcon from '@mui/icons-material/Lock';
+import userHeader from "@/public/images/userHeader.png";
 
 const userInfo = {
   email: 'Mã sinh viên',
@@ -77,9 +77,9 @@ function Profile() {
       }
     } catch (error) {
       console.error(error);
-      if(error.response.data.code === 6) {
+      if (error.response.data.code === 6) {
         enqueueSnackbar("Mật khẩu không chính xác", { variant: "error" });
-      } else{
+      } else {
         enqueueSnackbar("Lỗi khi đổi mật khẩu", { variant: "error" });
       }
     }
@@ -92,7 +92,11 @@ function Profile() {
       </Box>
       <Stack direction="row" sx={{ alignItems: "center", gap: 15, py: 3, px: 10 }}>
         <Stack sx={{ alignItems: 'center' }}>
-          <img src={user.avatarUrl} alt="avt" style={{ width: '6rem', height: '6rem', borderRadius: '5rem' }} />
+          <img
+            src={user.avatarUrl.length > 0 ? user.avatarUrl : userHeader.src}
+            alt="avt"
+            style={{ width: '6rem', height: '6rem', borderRadius: '5rem' }}
+          />
           <Typography variant="h6" sx={{ mt: 2 }}>{user.name}</Typography>
         </Stack>
         <Rating name="size-large" defaultValue={4} size="large" readOnly />

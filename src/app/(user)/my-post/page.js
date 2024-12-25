@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   Box,
   TextField,
@@ -16,7 +16,6 @@ import dayjs from 'dayjs'
 import { DateRangePicker } from '@mui/x-date-pickers-pro/DateRangePicker';
 import { SingleInputDateRangeField } from '@mui/x-date-pickers-pro/SingleInputDateRangeField';
 import { getMyPostService } from '@/services/postService'
-
 
 const postTypeSelect = [
   {
@@ -43,8 +42,11 @@ const ExpirySelect = [
 function MyPost() {
   const [posts, setPosts] = useState([]);
   const [isExpired, setIsExpired] = useState(ExpirySelect[0].value);
-  const [postType, setPostType] = useState(postTypeSelect[0].value);
-  const [dateRange, setDateRange] = useState([dayjs(), dayjs()]); // [start, end]
+  const [postType, setPostType] = useState(postTypeSelect[1].value);
+  const [dateRange, setDateRange] = useState([
+    dayjs().startOf("month"), // Ngày đầu tháng
+    dayjs().endOf("month"),   // Ngày cuối tháng
+  ]);
 
   const handleDateChange = (newValue) => {
     setDateRange(newValue); // Cập nhật giá trị
@@ -61,9 +63,9 @@ function MyPost() {
   const fetchPosts = async () => {
     try {
       const res = await getMyPostService(
-        postType, 
-        isExpired === 'expiry' ? false : true, 
-        dayjs(dateRange[0]).format("YYYY-MM-DD"), 
+        postType,
+        isExpired === 'expiry' ? false : true,
+        dayjs(dateRange[0]).format("YYYY-MM-DD"),
         dayjs(dateRange[1]).format("YYYY-MM-DD")
       );
       setPosts(res.data.data);
@@ -75,11 +77,9 @@ function MyPost() {
   }
 
   const handleConfirm = () => {
-    // Logic xác nhận
-    console.log('Đã xác nhận:', { postType, isExpired, dateRange });
+    // console.log('Đã xác nhận:', { postType, isExpired, dateRange });
     fetchPosts();
   };
-
 
   return (
     <Stack sx={{ width: 1, mt: 2, alignItems: 'center' }}>
@@ -194,7 +194,7 @@ function MyPost() {
       </Paper>
       <Stack spacing={5} sx={{ mt: 5, alignItems: "center" }}>
         {posts?.map((value, index) => (
-          <Post key={index} data={value} />
+          <Post key={index} data={value} isMyPostPage={true} />
         ))}
       </Stack>
 

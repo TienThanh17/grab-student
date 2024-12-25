@@ -19,8 +19,6 @@ import {createPostService} from '@/services/postService'
 import { useSelector } from 'react-redux';
 import { useSnackbar } from "notistack";
 
-
-
 const postTypeSelect = [
   {
     id: "passenger",
@@ -223,16 +221,6 @@ function PostCreation({ handleClosePostCreation }) {
       date !== null &&
       time !== null
     ) {
-      // console.log({
-      //   starting: startingTextRef.current,
-      //   destination: destinationTextRef.current,
-      //   lon: retrieveStarting,
-      //   lat: retrieveDestination,
-      //   postType: postType,
-      //   date: dayjs(date).format("DD-MM-YYYY"),
-      //   time: dayjs(time).format("hh:mm"),
-      //   content: text
-      // })
       try {
         const formData = {
           studentId: userId,
@@ -263,7 +251,6 @@ function PostCreation({ handleClosePostCreation }) {
         );
       }
     } else {
-      // console.log('missing param')
       enqueueSnackbar(
         "Nhập chưa đủ thông tin",
         { variant: "error" }

@@ -10,17 +10,20 @@ import Chip from "@mui/material/Chip";
 import { alpha } from "@mui/material/styles";
 import { setPostData } from "@/redux-toolkit/postSlice";
 import dayjs from 'dayjs'
-
-import Image from "next/image";
 import { useDispatch } from "react-redux";
+import { useRouter } from 'next/navigation';
 
-export default function Post({ data, handleOpen }) {
+export default function Post({ data, handleOpen, isMyPostPage }) {
   const dispatch = useDispatch();
+  const router = useRouter();
 
   const handleClickPost = () => {
     if (handleOpen) {
       dispatch(setPostData(data));
       handleOpen();
+    } else if (isMyPostPage && data.status && data.type === 'rider') {
+      // dispatch(setPostData(data));
+      router.push(`/request/${data.id}`)
     }
   }
 
@@ -48,8 +51,8 @@ export default function Post({ data, handleOpen }) {
           sx={{ alignItems: "center", justifyContent: "space-between" }}
         >
           <Stack direction="row" spacing={2} sx={{ alignItems: "center" }}>
-            <img src={data.student.avatarUrl} alt="avt" style={{width: '3.5rem', height: '3.5rem', borderRadius: '5rem'}}/>
-            <Typography variant="subtitle1" sx={{fontWeight: 'bold'}}>
+            <img src={data.student.avatarUrl} alt="avt" style={{ width: '3.5rem', height: '3.5rem', borderRadius: '5rem' }} />
+            <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
               {data.student.name}
             </Typography>
           </Stack>

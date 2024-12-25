@@ -181,8 +181,9 @@ const Login = () => {
                 otp: otpValue
             });
             // console.log('verify otp', res);
-            if (res.data.data.isVerified) {
-                router.push('rider')
+            if (res.data.data.accessToken) {
+                dispatch(login(res.data.data));
+                router.push('/rider');
             } else {
                 enqueueSnackbar(
                     "OTP không chính xác",
@@ -350,6 +351,7 @@ const Login = () => {
                                 <OTPInput>
                                     {otp.map((digit, index) => (
                                         <OTPDigit
+                                            autoComplete="off"
                                             key={index}
                                             name={`otp-${index}`}
                                             value={digit}
