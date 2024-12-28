@@ -1,0 +1,32 @@
+.GridData-Global {
+    width: 70rem;
+    margin-top: 20px;
+    justify-content: center;
+}
+
+.GridData-Icon {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+    height: 3rem;
+    margin-bottom: 20px;
+}
+
+.Icon-Data {
+    margin-right: 20px;
+    font-size: 35px;
+    color: rgb(42, 82, 138);
+}
+
+.GridData-Header {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    width: 80rem;
+    height: 5rem;
+}
+
+.GridData-Content {
+    align-items: center;
+    justify-content: center;
+}
