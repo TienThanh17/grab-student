@@ -89,7 +89,6 @@ function Mapbox({ mapRef, setDestination, setStarting, setIsAddStartingMarker, s
       }
     };
 
-
     const handleMouseDown = (e) => {
       isMouseMoving = false;
       windowStartPosition = { x: e.clientX, y: e.clientY }

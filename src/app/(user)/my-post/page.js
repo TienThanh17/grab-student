@@ -1,12 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import {
   Box,
   TextField,
   Button,
   Typography,
-  MenuItem, Stack, Paper, InputAdornment
+  MenuItem, Stack, Paper, InputAdornment,
+  Modal,
+  Fade
 } from "@mui/material";
 import TwoWheelerIcon from "@mui/icons-material/TwoWheeler";
 import TimerIcon from '@mui/icons-material/Timer';
@@ -16,11 +18,16 @@ import dayjs from 'dayjs'
 import { DateRangePicker } from '@mui/x-date-pickers-pro/DateRangePicker';
 import { SingleInputDateRangeField } from '@mui/x-date-pickers-pro/SingleInputDateRangeField';
 import { getMyPostService } from '@/services/postService'
-
+import empty from '@/public/images/empty-folder.png'
+import Image from 'next/image';
+import PostSelf from '@/components/post/PostSelf';
+import PostUpdate from '@/components/post/PostUpdate'
+import { setIsLoading } from '@/redux-toolkit/loadingSlice';
+import { useDispatch } from 'react-redux';
 
 const postTypeSelect = [
   {
-    label: "Kênh khách hàng",
+    label: "Kênh hành khách",
     value: "passenger",
   },
   {
@@ -44,7 +51,13 @@ function MyPost() {
   const [posts, setPosts] = useState([]);
   const [isExpired, setIsExpired] = useState(ExpirySelect[0].value);
   const [postType, setPostType] = useState(postTypeSelect[0].value);
-  const [dateRange, setDateRange] = useState([dayjs(), dayjs()]); // [start, end]
+  const [dateRange, setDateRange] = useState([
+    dayjs().startOf("month"), // Ngày đầu tháng
+    dayjs().endOf("month"),   // Ngày cuối tháng
+  ]);
+  const [openPostSelfModal, setOpenPostSelfModal] = useState(false);
+  const [openPostUpdate, setOpenPostUpdate] = useState(false);
+  const dispatch = useDispatch();
 
   const handleDateChange = (newValue) => {
     setDateRange(newValue); // Cập nhật giá trị
@@ -59,27 +72,32 @@ function MyPost() {
   };
 
   const fetchPosts = async () => {
+    dispatch(setIsLoading(true));
     try {
       const res = await getMyPostService(
-        postType, 
-        isExpired === 'expiry' ? false : true, 
-        dayjs(dateRange[0]).format("YYYY-MM-DD"), 
+        postType,
+        isExpired === 'expiry' ? false : true,
+        dayjs(dateRange[0]).format("YYYY-MM-DD"),
         dayjs(dateRange[1]).format("YYYY-MM-DD")
       );
       setPosts(res.data.data);
     } catch (error) {
       console.log(error)
     } finally {
-
+      dispatch(setIsLoading(false));
     }
   }
 
   const handleConfirm = () => {
-    // Logic xác nhận
-    console.log('Đã xác nhận:', { postType, isExpired, dateRange });
+    // console.log('Đã xác nhận:', { postType, isExpired, dateRange });
     fetchPosts();
   };
 
+  const handleOpenPostSelf = () => setOpenPostSelfModal(true);
+  const handleClosePostSelf = () => setOpenPostSelfModal(false);
+
+  const handleOpenPostUpdate = () => setOpenPostUpdate(true);
+  const handleClosePostUpdate = () => setOpenPostUpdate(false);
 
   return (
     <Stack sx={{ width: 1, mt: 2, alignItems: 'center' }}>
@@ -193,10 +211,25 @@ function MyPost() {
         </Box>
       </Paper>
       <Stack spacing={5} sx={{ mt: 5, alignItems: "center" }}>
-        {posts?.map((value, index) => (
-          <Post key={index} data={value} />
-        ))}
+        {posts.length > 0
+          ? posts.map((value, index) => (
+            <Post key={index} data={value} isMyPostPage={true} handleOpen={handleOpenPostSelf} handleOpenPostUpdate={handleOpenPostUpdate} fetchPosts={handleConfirm} />
+          ))
+          : <Image src={empty} alt='empty' width={150} height={150}></Image>
+        }
       </Stack>
+
+      <Modal
+        open={openPostSelfModal}
+        onClose={handleClosePostSelf}
+        disableScrollLock={true}
+      >
+        <PostSelf handleClose={handleClosePostSelf} />
+      </Modal>
+
+      <Modal open={openPostUpdate} onClose={handleClosePostUpdate} TransitionComponent={Fade}>
+        <PostUpdate handleClosePostUpdate={handleClosePostUpdate} fetchPosts={handleConfirm} />
+      </Modal>
 
     </Stack>
   )

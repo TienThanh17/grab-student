@@ -17,7 +17,6 @@ import SendIcon from "@mui/icons-material/Send";
 import TextField from "@mui/material/TextField";
 import InputAdornment from "@mui/material/InputAdornment";
 import Avatar from "@mui/material/Avatar";
-
 import { useRef, useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import Image from "next/image";
@@ -27,10 +26,16 @@ import SearchPlace from "./SearchPlace";
 import SearchPopper from "./SearchPopper";
 import Mapbox from "@/components/mapbox/Mapbox";
 import mapboxgl from "mapbox-gl";
-import { getSuggestPlaceService, getDirectionService } from "./../../services/mapService";
+import { getSuggestPlaceService, getDirectionService, getMultiDirectionService } from "./../../services/mapService";
+import { createRideRequestService, acceptRequestService } from './../../services/rideService'
+import { useSnackbar } from "notistack";
+import { useParams } from "next/navigation";
 
-function PostDetail({ handleClose }) {
+function PostDetail({ handleClose, fetchPosts }) {
+  const params = useParams();
+  const { enqueueSnackbar } = useSnackbar();
   const postData = useSelector((state) => state.post.postData);
+  const userInfo = useSelector((state) => state.user.userInfo);
   const [starting, setStarting, debouncedStarting] = useDebouncedState(
     "",
     2000
@@ -52,10 +57,14 @@ function PostDetail({ handleClose }) {
   const [retrieveDestination, setRetrieveDestination] = useState([]);
   const [isAddStartingMarker, setIsAddStartingMarker] = useState(false);
   const [isAddDestinationMarker, setIsAddDestinationMarker] = useState(false);
-  const [date, setDate] = useState(null);
-  const [time, setTime] = useState(null);
   const [message, setMessage] = useState("");
+  const [duration, setDuration] = useState(null)
+  const [distance, setDistance] = useState(null)
+  const [riderDuration, setRiderDuration] = useState(null)
+  const [riderDistance, setRiderDistance] = useState(null)
   const mapRef = useRef();
+  const postStartingMarkerRef = useRef(null);
+  const postDestinationMarkerRef = useRef(null);
   const startingMarkerRef = useRef(null);
   const destinationMarkerRef = useRef(null);
   const startingTextRef = useRef('');
@@ -77,13 +86,81 @@ function PostDetail({ handleClose }) {
     setIsAddDestinationMarker(false)
   };
 
-  const handleDateChange = (newValue) => {
-    setDate(newValue);
-  };
-
-  const sendRequest = () => {
-    //call api
-    console.log("send request");
+  const handleSubmit = async () => {
+    console.log('postData', postData);
+    try {
+      if (params.postType === 'rider') {
+        const data = {
+          'passenger_id': userInfo.id,
+          'post_id': postData.id,
+          'pickUpLocation': startingTextRef.current,
+          'dropOffLocation': destinationTextRef.current,
+          "pickUpLat": retrieveStarting[1],
+          "pickUpLon": retrieveStarting[0],
+          "dropOffLat": retrieveDestination[1],
+          "dropOffLon": retrieveDestination[0],
+          "status": "pending",
+          'estimatedTime': duration,
+          'distance': distance
+        }
+        const res = await createRideRequestService(data);
+        if (res.data.code === 0) {
+          enqueueSnackbar(
+            "Gửi yêu cầu thành công",
+            { variant: "success" }
+          );
+          handleClose();
+        }
+      } else if (params.postType === 'passenger') {
+        const data = {
+          'passenger_id': postData.student.id,
+          'post_id': postData.id,
+          'pickUpLocation': postData.pickUpLocation,
+          'dropOffLocation': postData.dropOffLocation,
+          "pickUpLat": postData.pickUpLat,
+          "pickUpLon": postData.pickUpLon,
+          "dropOffLat": postData.dropOffLat,
+          "dropOffLon": postData.dropOffLon,
+          "status": "accepted",
+          'estimatedTime': duration,
+          'distance': distance
+        }
+        const res = await createRideRequestService(data);
+        const res2 = await acceptRequestService({
+          requestId: res.data.data.id,
+          riderId: userInfo.id,
+          riderStartLocation: startingTextRef.current,
+          riderEndLocation: destinationTextRef.current,
+          startLon: postData.pickUpLon,
+          startLat: postData.pickUpLat,
+          endLon: postData.dropOffLon,
+          endLat: postData.dropOffLat,
+          estimatedTime: riderDuration,
+          distance: riderDistance
+        })
+        if (res2.data.code === 0) {
+          enqueueSnackbar(
+            "Gửi yêu cầu thành công",
+            { variant: "success" }
+          );
+          handleClose();
+          fetchPosts();
+        }
+      }
+    } catch (error) {
+      console.log(error)
+      if (error.response.data.code === 19) {
+        enqueueSnackbar(
+          "Yêu cầu đã tồn tại",
+          { variant: "error" }
+        );
+      } else {
+        enqueueSnackbar(
+          "Gửi yêu cầu không thành công",
+          { variant: "error" }
+        );
+      }
+    }
   };
 
   const handleChangeMessage = (e) => {
@@ -146,12 +223,22 @@ function PostDetail({ handleClose }) {
     }
   };
 
-  const getDirection = async () => {
+  const getMultiDirection = async (start1, end1, start2, end2) => {
     try {
-      const res = await getDirectionService(retrieveStarting, retrieveDestination);
-      console.log(res.data.routes[0]);
-
+      const res = await getMultiDirectionService(start1, end1, start2, end2);
+      // console.log(res.data.routes);
       const data = res.data.routes[0];
+
+      const durationInMinutes = data.duration / 60; // Chuyển giây thành phút
+      const formattedDuration =
+        durationInMinutes > 60
+          ? `${Math.floor(durationInMinutes / 60)} giờ ${Math.round(durationInMinutes % 60)} phút`
+          : `${Math.round(durationInMinutes)} phút`;
+      // Format distance
+      const formattedDistance = `${(data.distance / 1000).toFixed(1)} km`;
+      setRiderDistance(formattedDistance);
+      setRiderDuration(formattedDuration);
+
       const route = data.geometry.coordinates;
       const geojson = {
         type: 'Feature',
@@ -163,29 +250,108 @@ function PostDetail({ handleClose }) {
       };
 
       // Nếu tuyến đường đã tồn tại trên bản đồ, cập nhật nó
-      if (mapRef.current.getSource('route')) {
-        mapRef.current.getSource('route').setData(geojson);
+      if (mapRef.current.getSource('route1')) {
+        mapRef.current.getSource('route1').setData(geojson);
       }
       // Nếu không, thêm một lớp mới
       else {
+        mapRef.current.addSource(`route1`, {
+          type: 'geojson',
+          data: geojson
+        });
+
         mapRef.current.addLayer({
-          id: 'route',
+          id: 'route1',
           type: 'line',
-          source: {
-            type: 'geojson',
-            data: geojson
-          },
+          source: 'route1',
           layout: {
             'line-join': 'round',
             'line-cap': 'round'
           },
           paint: {
-            'line-color': '#3887be',
+            'line-color': '#4285F4',
             'line-width': 5,
             'line-opacity': 0.75
           }
         });
       }
+
+      // Zoom out để xem toàn bộ tuyến đường
+      const bounds = new mapboxgl.LngLatBounds();
+
+      res.data.routes.forEach(route => {
+        route.geometry.coordinates.forEach(coord => {
+          bounds.extend(coord);
+        });
+      });
+
+      mapRef.current.fitBounds(bounds, {
+        padding: 100
+      });
+
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const getDirection = async (startingLocation, destinationLocation) => {
+    try {
+      const res = await getDirectionService(startingLocation, destinationLocation);
+      // console.log(res.data.routes[0]);
+      const data = res.data.routes[0];
+      const durationInMinutes = data.duration / 60; // Chuyển giây thành phút
+      const formattedDuration =
+        durationInMinutes > 60
+          ? `${Math.floor(durationInMinutes / 60)} giờ ${Math.round(durationInMinutes % 60)} phút`
+          : `${Math.round(durationInMinutes)} phút`;
+      // Format distance
+      const formattedDistance = `${(data.distance / 1000).toFixed(1)} km`;
+
+      setDistance(formattedDistance);
+      setDuration(formattedDuration);
+
+      const route = data.geometry.coordinates;
+      const geojson = {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: route
+        }
+      };
+      // Đảm bảo bản đồ đã được tải
+      if (!mapRef.current.isStyleLoaded()) {
+        await new Promise(resolve => mapRef.current.once('style.load', resolve));
+      }
+      // Đợi cho style được tải xong
+      // mapRef.current.on('style.load', () => {
+      // Nếu tuyến đường đã tồn tại trên bản đồ, cập nhật nó
+      if (mapRef.current.getSource('route1')) {
+        mapRef.current.getSource('route1').setData(geojson);
+      }
+      // Nếu không, thêm một lớp mới
+      else {
+        mapRef.current.addSource(`route1`, {
+          type: 'geojson',
+          data: geojson
+        });
+
+        mapRef.current.addLayer({
+          id: 'route1',
+          type: 'line',
+          source: 'route1',
+          layout: {
+            'line-join': 'round',
+            'line-cap': 'round'
+          },
+          paint: {
+            'line-color': '#4285F4',
+            'line-width': 5,
+            'line-opacity': 0.75
+          }
+        });
+      }
+
       // Zoom out để xem toàn bộ tuyến đường
       const coordinates = geojson.geometry.coordinates;
       const bounds = new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]);
@@ -195,8 +361,9 @@ function PostDetail({ handleClose }) {
       }
 
       mapRef.current.fitBounds(bounds, {
-        padding: 50
+        padding: 100
       });
+      // });
 
     } catch (err) {
       console.log(err);
@@ -204,6 +371,45 @@ function PostDetail({ handleClose }) {
       // setLoadingStartingSearch(false);
     }
   };
+
+  useEffect(() => {
+    // Xóa marker cũ nếu nó tồn tại
+    if (postStartingMarkerRef.current) {
+      postStartingMarkerRef.current.remove();
+    }
+    if (postDestinationMarkerRef.current) {
+      postDestinationMarkerRef.current.remove();
+    }
+    const startingLocation = [postData.pickUpLon, postData.pickUpLat];
+    const destinationLocation = [postData.dropOffLon, postData.dropOffLat];
+
+    // Tạo một marker tùy chỉnh
+    const el = document.createElement('div');
+    el.className = 'postStartingMarker';
+    // Tạo popup cho điểm bắt đầu
+    const startPopup = new mapboxgl.Popup({ offset: 25 }).setText('Điểm bắt đầu');
+    const destinationPopup = new mapboxgl.Popup({ offset: 25 }).setText('Điểm đến');
+
+    postStartingMarkerRef.current = new mapboxgl.Marker(el)
+      .setLngLat(startingLocation)
+      .setPopup(startPopup)
+      .addTo(mapRef.current);
+
+    postDestinationMarkerRef.current = new mapboxgl.Marker({ color: "green", rotation: 0 })
+      .setLngLat(destinationLocation)
+      .setPopup(destinationPopup)
+      .addTo(mapRef.current);
+
+    new Promise((resolve, reject) => {
+      try {
+        getDirection(startingLocation, destinationLocation);
+        resolve('success')
+      } catch (error) {
+        console.log(error);
+        reject('fail');
+      }
+    }).then((data) => console.log('get direction', data));
+  }, [postData]);
 
   useEffect(() => {
     if (debouncedStarting.trim().length > 0 && !isAddStartingMarker) {
@@ -265,12 +471,19 @@ function PostDetail({ handleClose }) {
   useEffect(() => {
     //retrieveStarting = [123, 321]
     if (retrieveStarting.length > 0 && retrieveDestination.length > 0) {
-      getDirection();
+      const startingLocation = [postData.pickUpLon, postData.pickUpLat];
+      const destinationLocation = [postData.dropOffLon, postData.dropOffLat];
+      // getDirection(retrieveStarting, retrieveDestination);
+      if (params.postType === 'rider') {
+        getMultiDirection(startingLocation, destinationLocation, retrieveStarting, retrieveDestination);
+      } else if (params.postType === 'passenger') {
+        getMultiDirection(retrieveStarting, retrieveDestination, startingLocation, destinationLocation);
+      }
     }
   }, [retrieveStarting, retrieveDestination]);
 
   return (
-    <Box sx={{  
+    <Box sx={{
       position: "absolute",
       top: "50%",
       left: "50%",
@@ -282,7 +495,7 @@ function PostDetail({ handleClose }) {
       p: { sm: 0, md: 4 },
       borderRadius: { sm: 0, md: 9 },
       overflowY: "auto"
-      }}
+    }}
     >
       <Grid
         container
@@ -298,7 +511,7 @@ function PostDetail({ handleClose }) {
       >
         <Grid size={8}>
           <Typography variant="subtitle1" sx={{ color: alpha("#000", 0.6) }}>
-            Điểm xuất phát
+            {params.postType === 'rider' ? 'Điểm xuất phát' : 'Điểm đón'}
           </Typography>
         </Grid>
         <Grid size={1}>
@@ -307,7 +520,7 @@ function PostDetail({ handleClose }) {
         <Grid size={3}></Grid>
 
         <Grid size={8}>
-          <Typography variant="subtitle1">{postData.from}</Typography>
+          <Typography variant="subtitle1">{postData.pickUpLocation}</Typography>
         </Grid>
 
         <Grid size={1}>
@@ -320,7 +533,7 @@ function PostDetail({ handleClose }) {
             sx={{ alignItems: "center" }}
           >
             <WatchLaterIcon color="primary" />
-            <Typography variant="subtitle1">{postData.time}</Typography>
+            <Typography variant="subtitle1">{postData.startTimeString}</Typography>
           </Stack>
         </Grid>
 
@@ -349,12 +562,12 @@ function PostDetail({ handleClose }) {
             sx={{ alignItems: "center" }}
           >
             <CalendarMonthIcon color="primary" />
-            <Typography variant="subtitle1">{postData.date}</Typography>
+            <Typography variant="subtitle1">{postData.startDate}</Typography>
           </Stack>
         </Grid>
 
         <Grid size={8}>
-          <Typography variant="subtitle1">{postData.to}</Typography>
+          <Typography variant="subtitle1">{postData.dropOffLocation}</Typography>
         </Grid>
         <Grid size={1}>
           <Divider orientation="vertical" />
@@ -380,25 +593,25 @@ function PostDetail({ handleClose }) {
             paddingInline: 1,
           }}
         >
-            <SearchPlace
-              handleChangeStarting={handleChangeStarting}
-              starting={starting}
-              setStarting={setStarting}
-              handleChangeDestination={handleChangeDestination}
-              destination={destination}
-              setDestination={setDestination}
-              type="postCreation"
-              loadingStartingSearch={loadingStartingSearch}
-              setOpenStartingPopper={setOpenStartingPopper}
-              setOpenDestinationPopper={setOpenDestinationPopper}
-              openDestinationPopper={openDestinationPopper}
-              openStartingPopper={openStartingPopper}
-              loadingDestinationSearch={loadingDestinationSearch}
-              setAnchorDestination={setAnchorDestination}
-              setAnchorStarting={setAnchorStarting}
-              popperStartingRef={popperStartingRef}
-              popperDestinationRef={popperDestinationRef}
-            />
+          <SearchPlace
+            handleChangeStarting={handleChangeStarting}
+            starting={starting}
+            setStarting={setStarting}
+            handleChangeDestination={handleChangeDestination}
+            destination={destination}
+            setDestination={setDestination}
+            type="postCreation"
+            loadingStartingSearch={loadingStartingSearch}
+            setOpenStartingPopper={setOpenStartingPopper}
+            setOpenDestinationPopper={setOpenDestinationPopper}
+            openDestinationPopper={openDestinationPopper}
+            openStartingPopper={openStartingPopper}
+            loadingDestinationSearch={loadingDestinationSearch}
+            setAnchorDestination={setAnchorDestination}
+            setAnchorStarting={setAnchorStarting}
+            popperStartingRef={popperStartingRef}
+            popperDestinationRef={popperDestinationRef}
+          />
         </Stack>
         <Mapbox mapRef={mapRef} setStarting={setStarting} setDestination={setDestination} setIsAddStartingMarker={setIsAddStartingMarker} setIsAddDestinationMarker={setIsAddDestinationMarker} setRetrieveDestination={setRetrieveDestination} setRetrieveStarting={setRetrieveStarting} destinationTextRef={destinationTextRef} startingTextRef={startingTextRef} />
         {/* <Box
@@ -434,27 +647,22 @@ function PostDetail({ handleClose }) {
             spacing={2}
             sx={{ alignItems: "center", display: { xs: "none", md: "flex" } }}
           >
-            <Image src={postData.avatarURL} alt="avt" />
+            <Avatar
+              src={postData.student.avatarUrl}
+              alt="avt"
+              sx={{ width: '3rem', height: '3rem', borderRadius: '5rem' }}
+            />
             <Typography
               variant="subtitle1"
               sx={{ fontSize: { xs: 14, md: 16 }, fontWeight: "bold" }}
             >
-              {postData.name}
+              {postData.student.name}
             </Typography>
           </Stack>
           <Chip
-            avatar={<Avatar alt="Natacha" src={postData.avatarURL} />}
-            label={postData.name}
-            variant="outlined"
-            sx={{
-              fontWeight: "bold",
-              bgcolor: "white",
-              display: { xs: "flex", md: "none" },
-            }}
-          />
-          <Chip
             icon={<StarRoundedIcon sx={{ color: "gold !important" }} />}
             label={postData.rating}
+
             sx={{ fontWeight: "bold", bgcolor: "white" }}
             variant="outlined"
           />
@@ -474,7 +682,7 @@ function PostDetail({ handleClose }) {
               borderRadius: 3,
               display: { xs: "none", md: "block" },
             }}
-            onClick={sendRequest}
+            onClick={handleSubmit}
           >
             {postData.type === 'rider' ? 'Gửi yêu cầu' : 'Chấp nhận yêu cầu'}
           </Button>
@@ -482,6 +690,7 @@ function PostDetail({ handleClose }) {
             label="Gửi tin nhắn"
             value={message}
             onChange={handleChangeMessage}
+            autoComplete="off"
             variant="outlined"
             size="medium"
             sx={{

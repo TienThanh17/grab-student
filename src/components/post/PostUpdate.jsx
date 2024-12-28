@@ -15,7 +15,7 @@ import { useDebouncedState } from "@/utils/customHook";
 import mapboxgl from "mapbox-gl";
 import Mapbox from "@/components/mapbox/Mapbox";
 import { getSuggestPlaceService, getDirectionService } from "./../../services/mapService";
-import { createPostService } from '@/services/postService'
+import { createPostService, updatePostService } from '@/services/postService'
 import { useSelector } from 'react-redux';
 import { useSnackbar } from "notistack";
 
@@ -33,7 +33,9 @@ const postTypeSelect = [
 const MAX_TEXT_LENGTH = 200;
 const MAX_LINES = 3;
 
-function PostCreation({ handleClosePostCreation }) {
+function PostUpdate({ handleClosePostUpdate, fetchPosts }) {
+  const postData = useSelector((state) => state.post.postData);
+  console.log(postData);
   const [starting, setStarting, debouncedStarting] = useDebouncedState(
     "",
     2000
@@ -51,28 +53,23 @@ function PostCreation({ handleClosePostCreation }) {
   const [openDestinationPopper, setOpenDestinationPopper] = useState(false);
   const [anchorStarting, setAnchorStarting] = useState(null);
   const [anchorDestination, setAnchorDestination] = useState(null);
-  const [retrieveStarting, setRetrieveStarting] = useState([]);
-  const [retrieveDestination, setRetrieveDestination] = useState([]);
+  const [retrieveStarting, setRetrieveStarting] = useState([postData.pickUpLon, postData.pickUpLat]);
+  const [retrieveDestination, setRetrieveDestination] = useState([postData.dropOffLon, postData.dropOffLat]);
   const [isAddStartingMarker, setIsAddStartingMarker] = useState(false);
   const [isAddDestinationMarker, setIsAddDestinationMarker] = useState(false);
-  const [postType, setPostType] = useState(postTypeSelect[0].id);
-  const [date, setDate] = useState(null);
-  const [time, setTime] = useState(null);
-  const [text, setText] = useState("");
+  const [postType, setPostType] = useState(postData?.type);
+  const [date, setDate] = useState(dayjs(postData.startDate));
+  const [time, setTime] = useState(dayjs(postData?.startTimeString, 'hh:mm'));
+  const [text, setText] = useState(postData?.content);
   const mapRef = useRef();
   const startingMarkerRef = useRef(null);
   const destinationMarkerRef = useRef(null);
-  const startingTextRef = useRef('');
-  const destinationTextRef = useRef('');
+  const startingTextRef = useRef(postData.pickUpLocation);
+  const destinationTextRef = useRef(postData.dropOffLocation);
   const popperDestinationRef = useRef(null);
   const popperStartingRef = useRef(null);
   const userId = useSelector((state) => state.user.userInfo.id)
   const { enqueueSnackbar } = useSnackbar();
-
-  // useEffect(() => {
-  //   // console.log(dayjs(date).format("DD-MM-YYYY"));
-  //   console.log(dayjs(time).format("hh:mm"));
-  // }, [date, time])
 
   const getCurrentLocation = () => {
     return new Promise((resolve, reject) => {
@@ -127,8 +124,6 @@ function PostCreation({ handleClosePostCreation }) {
   const getDirection = async () => {
     try {
       const res = await getDirectionService(retrieveStarting, retrieveDestination);
-      console.log(res.data.routes[0]);
-
       const data = res.data.routes[0];
       const route = data.geometry.coordinates;
       const geojson = {
@@ -139,7 +134,12 @@ function PostCreation({ handleClosePostCreation }) {
           coordinates: route
         }
       };
-
+  
+      // Đảm bảo bản đồ đã được tải
+      if (!mapRef.current.isStyleLoaded()) {
+        await new Promise(resolve => mapRef.current.once('style.load', resolve));
+      }
+  
       // Nếu tuyến đường đã tồn tại trên bản đồ, cập nhật nó
       if (mapRef.current.getSource('route')) {
         mapRef.current.getSource('route').setData(geojson);
@@ -164,22 +164,20 @@ function PostCreation({ handleClosePostCreation }) {
           }
         });
       }
+  
       // Zoom out để xem toàn bộ tuyến đường
       const coordinates = geojson.geometry.coordinates;
       const bounds = new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]);
-
+  
       for (const coord of coordinates) {
         bounds.extend(coord);
       }
-
+  
       mapRef.current.fitBounds(bounds, {
         padding: 150
       });
-
     } catch (err) {
       console.log(err);
-    } finally {
-
     }
   };
 
@@ -236,17 +234,18 @@ function PostCreation({ handleClosePostCreation }) {
           status: true,
           content: text
         };
-        const res = await createPostService(formData);
+        const res = await updatePostService(postData.id, formData);
         if (res.data.code === 0) {
           enqueueSnackbar(
-            "Tạo thành công",
+            "Edit thành công",
             { variant: "success" }
           );
-          handleClosePostCreation()
+          handleClosePostUpdate()
+          fetchPosts()
         }
       } catch (error) {
         enqueueSnackbar(
-          "Tạo không thành công",
+          "Edit không thành công",
           { variant: "error" }
         );
       }
@@ -315,8 +314,8 @@ function PostCreation({ handleClosePostCreation }) {
     }
   }, [retrieveDestination]);
 
+
   useEffect(() => {
-    //retrieveStarting = [123, 321]
     if (retrieveStarting.length > 0 && retrieveDestination.length > 0) {
       getDirection();
     }
@@ -341,7 +340,7 @@ function PostCreation({ handleClosePostCreation }) {
     >
       <Stack direction="row">
         <Typography variant="h6" sx={{ flex: 1, textAlign: "center" }}>
-          Tạo bài đăng
+          Chỉnh sửa bài đăng
         </Typography>
         <CancelIcon
           sx={{
@@ -349,7 +348,7 @@ function PostCreation({ handleClosePostCreation }) {
             fontSize: { xs: 30, md: 30 },
             cursor: "pointer",
           }}
-          onClick={handleClosePostCreation}
+          onClick={handleClosePostUpdate}
         />
       </Stack>
       <Divider sx={{ mt: { xs: 0, md: 2 } }} />
@@ -542,4 +541,4 @@ function PostCreation({ handleClosePostCreation }) {
   );
 }
 
-export default PostCreation;
+export default PostUpdate;
