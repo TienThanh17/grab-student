@@ -13,7 +13,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import SearchIcon from "@mui/icons-material/Search";
 import MoreIcon from "@mui/icons-material/MoreVert";
 import Drawer from "@mui/material/Drawer";
-import { InputBase } from "@mui/material";
+import { Avatar, Divider, Fade, InputBase, Stack } from "@mui/material";
 import Modal from "@mui/material/Modal";
 import FeedIcon from '@mui/icons-material/Feed';
 
@@ -32,9 +32,8 @@ import add from "@/public/images/Add.png";
 import Sidebar from "../sidebar/Sidebar";
 import PostCreation from "@/components/post/PostCreation";
 import { useRouter } from 'next/navigation';
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { logout } from '@/redux-toolkit/userSlice';
-import Cookies from "js-cookie";
 
 
 export default function Header() {
@@ -43,8 +42,11 @@ export default function Header() {
   const [openDrawer, setOpenDrawer] = useState(false);
   const [openPostCreation, setOpenPostCreation] = useState(false);
   const dispatch = useDispatch();
-
+  const userInfo = useSelector((state) => state.user.userInfo)
   const router = useRouter();
+
+  console.log(userInfo);
+
 
   const toggleDrawer = (newOpen) => () => {
     setOpenDrawer(newOpen);
@@ -81,22 +83,22 @@ export default function Header() {
 
   const handleClickMyPost = () => {
     handleMenuClose();
-    router.push(`my-post`);
+    router.push(`/my-post`);
   }
 
   const handleClickProfile = () => {
     handleMenuClose();
-    router.push(`profile`);
+    router.push(`/profile`);
   }
 
   const handleClickRequest = () => {
     handleMenuClose();
-    router.push(`request`);
+    router.push(`/my-request`);
   }
 
   const handleClickRide = () => {
     handleMenuClose();
-    router.push(`ride`);
+    router.push(`/ride`);
   }
 
   const handleClickLogout = () => {
@@ -108,8 +110,8 @@ export default function Header() {
     { icon: add, label: "Tạo bài đăng", handle: handleOpenPostCreation },
     { icon: userIcon, label: "Thông tin cá nhân", handle: handleClickProfile },
     { icon: news, label: "Bài đăng của tôi", handle: handleClickMyPost },
+    { icon: Inquiry, label: "Yêu cầu chuyến đi", handle: handleClickRequest },
     { icon: Motorcycle, label: "Chuyến xe", handle: handleClickRide },
-    // { icon: Inquiry, label: "Yêu cầu chở", handle: handleClickRequest },
     { icon: Logout, label: "Đăng xuất", handle: handleClickLogout },
   ];
 
@@ -131,6 +133,10 @@ export default function Header() {
       onClose={handleMenuClose}
       disableScrollLock={true}
     >
+      <Stack alignItems='center' justifyContent='center' p={1}>
+        {userInfo.name}
+      </Stack>
+      <Divider></Divider>
       {userMenu.map((value, index) => (
         <MenuItem
           key={index}
@@ -246,18 +252,7 @@ export default function Header() {
                 <Image src={notifHeader} alt="icon" width={30} height={30} />
               </Badge>
             </IconButton>
-            <IconButton
-              size="large"
-              edge="end"
-              aria-label="account of current user"
-              aria-controls={menuId}
-              aria-haspopup="true"
-              onClick={handleProfileMenuOpen}
-              color="inherit"
-              sx={{ ml: 2 }}
-            >
-              <Image src={userHeader} alt="icon" width={30} height={30} />
-            </IconButton>
+            <Avatar src={userInfo?.avatarUrl} alt="userInfo" sx={{ width: 50, height: 50, ml: 2, cursor: 'pointer' }} onClick={handleProfileMenuOpen} aria-controls={menuId} />
           </Box>
           <Box sx={{ display: { xs: "flex", sm: "flex", md: "none" } }}>
             <IconButton
@@ -307,7 +302,7 @@ export default function Header() {
       >
         <Sidebar toggleDrawer={toggleDrawer} />
       </Drawer>
-      <Modal open={openPostCreation} onClose={handleClosePostCreation}>
+      <Modal open={openPostCreation} onClose={handleClosePostCreation} TransitionComponent={Fade} disableScrollLock={true}>
         <PostCreation handleClosePostCreation={handleClosePostCreation} />
       </Modal>
     </Box>

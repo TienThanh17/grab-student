@@ -14,7 +14,7 @@ import { useRouter, useParams } from "next/navigation";
 
 const navBar = [
   { icon: driverIcon, label: "Kênh Tài Xế", path: "rider" },
-  { icon: clientIcon, label: "Kênh Khách Hàng", path: "passenger" },
+  { icon: clientIcon, label: "Kênh Hành Khách", path: "passenger" },
 ];
 
 function Sidebar({ toggleDrawer }) {
@@ -23,7 +23,7 @@ function Sidebar({ toggleDrawer }) {
 
   return (
     <Box
-      sx={{ width: 250 }}
+      sx={{ width: 250,}}
       role="presentation"
       onClick={toggleDrawer && toggleDrawer(false)}
     >
@@ -38,7 +38,7 @@ function Sidebar({ toggleDrawer }) {
               key={index}
               disablePadding
             >
-              <ListItemButton onClick={() => router.push(value.path)}>
+              <ListItemButton onClick={() => router.push(`/${value.path}`)}>
                 <ListItemIcon>
                   <Image src={value.icon} alt="icon" width={40} height={40} />
                 </ListItemIcon>

@@ -32,7 +32,7 @@ const RideComponent = ({ data }) => {
         <Box display="flex" alignItems="center" justifyContent="space-between">
           <Box display="flex" alignItems="center" mb={2}>
             <Avatar
-              src={data.rider.avatar}
+              src={data.rider.avatarUrl}
               alt="rider"
               sx={{ width: 45, height: 45, marginRight: 2 }}
             />
@@ -72,7 +72,7 @@ const RideComponent = ({ data }) => {
         <Box display="flex" alignItems="center" justifyContent="space-between">
         <Box display="flex" alignItems="center" mb={2}>
             <Avatar
-              src={data.passenger.avatar}
+              src={data.passenger.avatarUrl}
               alt="passenger"
               sx={{ width: 45, height: 45, marginRight: 2 }}
             />

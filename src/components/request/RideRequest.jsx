@@ -1,10 +1,18 @@
 import React, { useState } from "react";
-import { Card, CardContent, Avatar, Typography, Box, Button, IconButton, Divider, TextField, InputAdornment, Stack, Chip } from "@mui/material";
+import { Card, CardContent, Avatar, Typography, Box, Button, Divider, TextField, InputAdornment, Stack, Chip, IconButton } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CancelIcon from '@mui/icons-material/Cancel';
+import { updateRideRequestService } from "@/services/rideService";
+import { useSnackbar } from "notistack";
+import { setIsLoading } from "@/redux-toolkit/loadingSlice";
+import { useDispatch } from "react-redux";
 
-const RideRequest = ({ data }) => {
+const RideRequest = ({ data, handleAccept, fetchRideRequest, clickedRequestId, postData, handleMapbox }) => {
   const [message, setMessage] = useState("");
+  const { enqueueSnackbar } = useSnackbar();
+  const dispatch = useDispatch();
 
   const handleChangeMessage = (e) => {
     //call api
@@ -16,9 +24,37 @@ const RideRequest = ({ data }) => {
     console.log(message);
   };
 
-  const handleAccept = (event) => {
-    event.stopPropagation(); // Ngăn sự kiện lan lên cha
-    console.log('data', data);
+  // const handleAcceptRequest = (event) => {
+  //   event.stopPropagation(); 
+  //   console.log('data', data);
+  //   handleAccept(data.id)
+  // };
+
+  const handleCancel = async (event) => {
+    event.stopPropagation();
+    dispatch(setIsLoading(true));
+    try {
+      const res = await updateRideRequestService(data.id, { status: 'rejected' });
+      if (res.data.code === 0) {
+        enqueueSnackbar(
+          "Từ chối yêu cầu thành công",
+          { variant: "success" }
+        );
+        fetchRideRequest();
+        if (clickedRequestId.current === data.id) {
+          clickedRequestId.current = null;
+          handleMapbox(postData);
+        }
+      }
+    } catch (error) {
+      console.log(error);
+      enqueueSnackbar(
+        "Lỗi",
+        { variant: "error" }
+      );
+    } finally {
+      dispatch(setIsLoading(false));
+    }
   };
 
   return (
@@ -83,13 +119,19 @@ const RideRequest = ({ data }) => {
 
         {/* Buttons */}
         <Stack direction='row' justifyContent="space-between" alignItems="center" mt={3}>
-          <Button
-            variant="contained"
-            color='primary'
-            onClick={handleAccept}
-          >
-            Chấp nhận
+
+          {/* <IconButton color="success" onClick={handleAcceptRequest}>
+            <CheckCircleIcon sx={{ fontSize: '2.5rem' }} />
+          </IconButton> */}
+
+          {/* <IconButton color="error" onClick={handleCancel}>
+            <CancelIcon sx={{ fontSize: '2.5rem' }} />
+          </IconButton> */}
+
+          <Button color="error" onClick={handleCancel} variant="contained">
+            Từ chối
           </Button>
+
           <TextField
             label="Gửi tin nhắn"
             value={message}

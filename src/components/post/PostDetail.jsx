@@ -31,7 +31,7 @@ import { createRideRequestService, acceptRequestService } from './../../services
 import { useSnackbar } from "notistack";
 import { useParams } from "next/navigation";
 
-function PostDetail({ handleClose }) {
+function PostDetail({ handleClose, fetchPosts }) {
   const params = useParams();
   const { enqueueSnackbar } = useSnackbar();
   const postData = useSelector((state) => state.post.postData);
@@ -60,6 +60,8 @@ function PostDetail({ handleClose }) {
   const [message, setMessage] = useState("");
   const [duration, setDuration] = useState(null)
   const [distance, setDistance] = useState(null)
+  const [riderDuration, setRiderDuration] = useState(null)
+  const [riderDistance, setRiderDistance] = useState(null)
   const mapRef = useRef();
   const postStartingMarkerRef = useRef(null);
   const postDestinationMarkerRef = useRef(null);
@@ -107,6 +109,7 @@ function PostDetail({ handleClose }) {
             "Gửi yêu cầu thành công",
             { variant: "success" }
           );
+          handleClose();
         }
       } else if (params.postType === 'passenger') {
         const data = {
@@ -127,13 +130,21 @@ function PostDetail({ handleClose }) {
           requestId: res.data.data.id,
           riderId: userInfo.id,
           riderStartLocation: startingTextRef.current,
-          riderEndLocation: destinationTextRef.current
+          riderEndLocation: destinationTextRef.current,
+          startLon: postData.pickUpLon,
+          startLat: postData.pickUpLat,
+          endLon: postData.dropOffLon,
+          endLat: postData.dropOffLat,
+          estimatedTime: riderDuration,
+          distance: riderDistance
         })
         if (res2.data.code === 0) {
           enqueueSnackbar(
             "Gửi yêu cầu thành công",
             { variant: "success" }
           );
+          handleClose();
+          fetchPosts();
         }
       }
     } catch (error) {
@@ -215,9 +226,19 @@ function PostDetail({ handleClose }) {
   const getMultiDirection = async (start1, end1, start2, end2) => {
     try {
       const res = await getMultiDirectionService(start1, end1, start2, end2);
-      console.log(res.data.routes);
-
+      // console.log(res.data.routes);
       const data = res.data.routes[0];
+
+      const durationInMinutes = data.duration / 60; // Chuyển giây thành phút
+      const formattedDuration =
+        durationInMinutes > 60
+          ? `${Math.floor(durationInMinutes / 60)} giờ ${Math.round(durationInMinutes % 60)} phút`
+          : `${Math.round(durationInMinutes)} phút`;
+      // Format distance
+      const formattedDistance = `${(data.distance / 1000).toFixed(1)} km`;
+      setRiderDistance(formattedDistance);
+      setRiderDuration(formattedDuration);
+
       const route = data.geometry.coordinates;
       const geojson = {
         type: 'Feature',
@@ -248,9 +269,9 @@ function PostDetail({ handleClose }) {
             'line-cap': 'round'
           },
           paint: {
-            // 'line-color': 'blue',
+            'line-color': '#4285F4',
             'line-width': 5,
-            // 'line-opacity': 0.75
+            'line-opacity': 0.75
           }
         });
       }
@@ -298,7 +319,10 @@ function PostDetail({ handleClose }) {
           coordinates: route
         }
       };
-
+      // Đảm bảo bản đồ đã được tải
+      if (!mapRef.current.isStyleLoaded()) {
+        await new Promise(resolve => mapRef.current.once('style.load', resolve));
+      }
       // Đợi cho style được tải xong
       // mapRef.current.on('style.load', () => {
       // Nếu tuyến đường đã tồn tại trên bản đồ, cập nhật nó
@@ -321,9 +345,9 @@ function PostDetail({ handleClose }) {
             'line-cap': 'round'
           },
           paint: {
-            'line-color': 'blue',
+            'line-color': '#4285F4',
             'line-width': 5,
-            // 'line-opacity': 0.75
+            'line-opacity': 0.75
           }
         });
       }
@@ -623,24 +647,18 @@ function PostDetail({ handleClose }) {
             spacing={2}
             sx={{ alignItems: "center", display: { xs: "none", md: "flex" } }}
           >
-            <img src={postData.student.avatarUrl} alt="avt" style={{ width: '3rem', height: '3rem', borderRadius: '5rem' }} />
+            <Avatar
+              src={postData.student.avatarUrl}
+              alt="avt"
+              sx={{ width: '3rem', height: '3rem', borderRadius: '5rem' }}
+            />
             <Typography
               variant="subtitle1"
               sx={{ fontSize: { xs: 14, md: 16 }, fontWeight: "bold" }}
             >
-              {postData.name}
+              {postData.student.name}
             </Typography>
           </Stack>
-          <Chip
-            avatar={<Avatar alt="Natacha" src={postData.avatarURL} />}
-            label={postData.name}
-            variant="outlined"
-            sx={{
-              fontWeight: "bold",
-              bgcolor: "white",
-              display: { xs: "flex", md: "none" },
-            }}
-          />
           <Chip
             icon={<StarRoundedIcon sx={{ color: "gold !important" }} />}
             label={postData.rating}

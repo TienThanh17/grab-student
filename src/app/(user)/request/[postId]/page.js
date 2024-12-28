@@ -73,7 +73,6 @@ function Request() {
     try {
       const res = await getDirectionService(startingLocation, destinationLocation);
       console.log(res.data.routes[0]);
-
       const data = res.data.routes[0];
       const route = data.geometry.coordinates;
       const geojson = {
@@ -107,9 +106,9 @@ function Request() {
             'line-cap': 'round'
           },
           paint: {
-            'line-color': 'blue',
+            'line-color': '#4285F4',
             'line-width': 5,
-            // 'line-opacity': 0.75
+            'line-opacity': 0.75
           }
         });
       }
@@ -135,7 +134,6 @@ function Request() {
   const getMultiDirection = async (start1, end1, start2, end2) => {
     try {
       const res = await getMultiDirectionService(start1, end1, start2, end2);
-
       const data = res.data.routes[0];
 
       const durationInMinutes = data.duration / 60; // Chuyển giây thành phút
@@ -143,10 +141,8 @@ function Request() {
         durationInMinutes > 60
           ? `${Math.floor(durationInMinutes / 60)} giờ ${Math.round(durationInMinutes % 60)} phút`
           : `${Math.round(durationInMinutes)} phút`;
-
       // Format distance
       const formattedDistance = `${(data.distance / 1000).toFixed(1)} km`;
-
       setDistance(formattedDistance);
       setDuration(formattedDuration);
 
@@ -178,7 +174,9 @@ function Request() {
             'line-cap': 'round'
           },
           paint: {
+            'line-color': '#4285F4',
             'line-width': 5,
+            'line-opacity': 0.75
           }
         });
       }
@@ -229,8 +227,8 @@ function Request() {
         if (destinationMarkerRef.current) {
           destinationMarkerRef.current.remove();
         }
-        const pickUpPopup = new mapboxgl.Popup({ offset: 25 }).setText('Điểm đón');
-        const dropOffPopup = new mapboxgl.Popup({ offset: 25 }).setText('Điểm trả');
+        const pickUpPopup = new mapboxgl.Popup({ offset: 25 }).setText('Điểm đón khách');
+        const dropOffPopup = new mapboxgl.Popup({ offset: 25 }).setText('Điểm trả khách');
         // Tạo một marker tùy chỉnh
         const el = document.createElement('div');
         el.className = 'postStartingMarker';
@@ -252,18 +250,66 @@ function Request() {
       .catch(error => console.log(error))
   }
 
+  const fetchRideRequest = async () => {
+    const res = await getRideRequestService(postId, 'pending');
+    setRideRequest(res.data.data);
+  }
+
+  const handleMapbox = (post) => {
+    // Remove old markers if they exist
+    if (postStartingMarkerRef.current) {
+      postStartingMarkerRef.current.remove();
+    }
+    if (postDestinationMarkerRef.current) {
+      postDestinationMarkerRef.current.remove();
+    }
+    if (startingMarkerRef.current) {
+      startingMarkerRef.current.remove();
+    }
+    if (destinationMarkerRef.current) {
+      destinationMarkerRef.current.remove();
+    }
+
+    // Extract locations
+    const startingLocation = [post.pickUpLon, post.pickUpLat];
+    const destinationLocation = [post.dropOffLon, post.dropOffLat];
+
+    // Create custom marker for starting location
+    const startMarkerElement = document.createElement('div');
+    startMarkerElement.className = 'marker';
+
+    // Create popups
+    const startPopup = new mapboxgl.Popup({ offset: 25 }).setText('Điểm xuất phát');
+    const destinationPopup = new mapboxgl.Popup({ offset: 25 }).setText('Điểm đến');
+
+    // Add markers to the map
+    postStartingMarkerRef.current = new mapboxgl.Marker(startMarkerElement)
+      .setLngLat(startingLocation)
+      .setPopup(startPopup)
+      .addTo(mapRef.current);
+
+    postDestinationMarkerRef.current = new mapboxgl.Marker({ color: 'red', rotation: 0 })
+      .setLngLat(destinationLocation)
+      .setPopup(destinationPopup)
+      .addTo(mapRef.current);
+
+    // Get directions
+    getDirection(startingLocation, destinationLocation)
+      .then(() => console.log('Direction fetched successfully'))
+      .catch((error) => console.error('Failed to fetch directions', error));
+  };
+
   useEffect(() => {
     const fetchPostAndRideRequest = async () => {
       dispatch(setIsLoading(true));
       try {
         // Fetch post data
-        const postRes = await getPostByIdService(postId);
-        const post = postRes.data.data;
+        const res = await getPostByIdService(postId);
+        const post = res.data.data;
         setPostData(post);
 
         // Fetch ride request data based on post data
-        const rideRequestRes = await getRideRequestService(post.id, 'pending');
-        setRideRequest(rideRequestRes.data.data);
+        await fetchRideRequest();
 
         // Handle Mapbox setup
         handleMapbox(post);
@@ -274,50 +320,12 @@ function Request() {
       }
     };
 
-    const handleMapbox = (post) => {
-      // Remove old markers if they exist
-      if (postStartingMarkerRef.current) {
-        postStartingMarkerRef.current.remove();
-      }
-      if (postDestinationMarkerRef.current) {
-        postDestinationMarkerRef.current.remove();
-      }
-
-      // Extract locations
-      const startingLocation = [post.pickUpLon, post.pickUpLat];
-      const destinationLocation = [post.dropOffLon, post.dropOffLat];
-
-      // Create custom marker for starting location
-      const startMarkerElement = document.createElement('div');
-      startMarkerElement.className = 'marker';
-
-      // Create popups
-      const startPopup = new mapboxgl.Popup({ offset: 25 }).setText('Điểm xuất phát');
-      const destinationPopup = new mapboxgl.Popup({ offset: 25 }).setText('Điểm đến');
-
-      // Add markers to the map
-      postStartingMarkerRef.current = new mapboxgl.Marker(startMarkerElement)
-        .setLngLat(startingLocation)
-        .setPopup(startPopup)
-        .addTo(mapRef.current);
-
-      postDestinationMarkerRef.current = new mapboxgl.Marker({ color: 'red', rotation: 0 })
-        .setLngLat(destinationLocation)
-        .setPopup(destinationPopup)
-        .addTo(mapRef.current);
-
-      // Get directions
-      getDirection(startingLocation, destinationLocation)
-        .then(() => console.log('Direction fetched successfully'))
-        .catch((error) => console.error('Failed to fetch directions', error));
-    };
-
     fetchPostAndRideRequest();
   }, [dispatch, postId]);
 
   return (
     <Stack sx={{ justifyContent: 'center', alignItems: 'center' }}>
-      <Paper elevation={3} sx={{ borderRadius: 7, overflow: "hidden", mt: 4, mb: 4, width: '90%' }}>
+      <Paper elevation={3} sx={{ borderRadius: 7, overflow: "hidden", mt: 4, width: '90%' }}>
         <Box sx={{ width: 1, textAlign: "center", bgcolor: "primary.main", p: 2, color: 'white' }}>
           <Typography variant="h6">DACH SÁCH YÊU CẦU</Typography>
         </Box>
@@ -407,7 +415,7 @@ function Request() {
             }}
           >
             <Mapbox mapRef={mapRef} />
-            {duration && distance && <Stack
+            {requestId.current && duration && distance && <Stack
               sx={{
                 position: 'absolute',
                 top: 10,
@@ -430,12 +438,11 @@ function Request() {
             </Stack>}
           </Box>
         </Box>
-
       </Paper>
 
       {rideRequest?.map((item, index) => (
-        <Box key={index} sx={{ width: 1 }} onClick={() => handleClickRequest(item)}>
-          <RideRequest data={item} />
+        <Box key={index} sx={{ width: 1, mt: 4 }} onClick={() => handleClickRequest(item)}>
+          <RideRequest data={item} clickedRequestId={requestId} handleMapbox={handleMapbox} postData={postData} handleAccept={handleAccept} fetchRideRequest={fetchRideRequest} />
         </Box>
       ))}
     </Stack>

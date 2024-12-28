@@ -9,14 +9,17 @@ export const getRideRequestService = (postId, status) => {
 
     return axios.get(`riderequest/fineByPost/${postId}?status=${status}`);
 }
-//eo xai
-// export const createRideService = (postId, rideRequestId, riderStartLocation, riderEndLocation) => {
-//     const params = {
-//         postId,
-//         rideRequestId
-//     }
-//     return axios.post(`ride/create`, null, { params });
-// }
+
+export const getRideRequestByUserService = (userId, status) => {
+
+    return axios.get(`riderequest?userId=${userId}&status=${status}`);
+}
+
+export const updateRideRequestService = (id, data) => {
+
+    return axios.put(`riderequest/${id}`, data);
+}
+
 
 export const acceptRequestService = ({ requestId, riderId, riderStartLocation, riderEndLocation, startLon, startLat, endLon, endLat, estimatedTime, distance }) => {
 
@@ -25,7 +28,7 @@ export const acceptRequestService = ({ requestId, riderId, riderStartLocation, r
 
 export const getRideService = (userId, role, status, from, to) => {
     const params = {
-        userId, 
+        userId,
         role,
         status,
         from,
@@ -35,7 +38,8 @@ export const getRideService = (userId, role, status, from, to) => {
 }
 
 export const getOneRideService = (id) => {
-    
+
     return axios.get(`ride/${id}`);
 }
+
 

@@ -9,7 +9,7 @@ function Header() {
     const router = useRouter();
 
     const navigateToLogin = () => {
-        router.push(`login`);
+        router.push(`/login`);
       };
 
     return (

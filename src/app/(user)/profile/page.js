@@ -1,6 +1,6 @@
 'use client'
 
-import { Paper, Box, Typography, Stack, Rating, TableContainer, Table, TableRow, TableCell, TableBody, FormControlLabel, Dialog, DialogTitle, DialogContent, TextField, Button, DialogActions, InputAdornment } from '@mui/material'
+import { Paper, Box, Typography, Stack, Rating, TableContainer, Table, TableRow, TableCell, TableBody, FormControlLabel, Dialog, DialogTitle, DialogContent, TextField, Button, DialogActions, InputAdornment, Avatar } from '@mui/material'
 import Switch from '@mui/material/Switch';
 import { useState } from 'react'
 import Image from "next/image";
@@ -36,7 +36,6 @@ function Profile() {
   const [openChangePassword, setOpenChangePassword] = useState(false);
   const [newPassword, setNewPassword] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
-
 
   console.log(user)
   // console.log(checked)
@@ -92,11 +91,7 @@ function Profile() {
       </Box>
       <Stack direction="row" sx={{ alignItems: "center", gap: 15, py: 3, px: 10 }}>
         <Stack sx={{ alignItems: 'center' }}>
-          <img
-            src={user.avatarUrl.length > 0 ? user.avatarUrl : userHeader.src}
-            alt="avt"
-            style={{ width: '6rem', height: '6rem', borderRadius: '5rem' }}
-          />
+          <Avatar src={user.avatarUrl} alt="avt" sx={{ width: '6rem', height: '6rem', borderRadius: '5rem' }} />
           <Typography variant="h6" sx={{ mt: 2 }}>{user.name}</Typography>
         </Stack>
         <Rating name="size-large" defaultValue={4} size="large" readOnly />

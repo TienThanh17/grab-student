@@ -35,7 +35,7 @@ const NotFoundPage = () => {
   const router = useRouter();
 
   const handleGoHome = () => {
-    router.push(`rider`);
+    router.push(`/rider`);
   };
 
   return (

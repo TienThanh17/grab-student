@@ -16,7 +16,16 @@ const users = [
   { avatar: userHeader, name: "Huỳnh Thanh Tiến" },
   { avatar: userHeader, name: "Tiến Huỳnh Thanh" },
   { avatar: userHeader, name: "Nguyen Thị Huyền Trân" },
-  { avatar: userHeader, name: "Huyền Trân" }
+  { avatar: userHeader, name: "Huyền Trân" },
+  { avatar: userHeader, name: "Nguyen Thị Huyền Trân" },
+  { avatar: userHeader, name: "Nguyen Thị Huyền Trân" },
+  { avatar: userHeader, name: "Nguyen Thị Huyền Trân" },
+  { avatar: userHeader, name: "Nguyen Thị Huyền Trân" },
+  { avatar: userHeader, name: "Nguyen Thị Huyền Trân" },
+  { avatar: userHeader, name: "Nguyen Thị Huyền Trân" },
+  { avatar: userHeader, name: "Nguyen Thị Huyền Trân" },
+  { avatar: userHeader, name: "Nguyen Thị Huyền Trân" },
+
 ];
 
 function MessageSideBar({ toggleDrawer }) {
@@ -24,7 +33,7 @@ function MessageSideBar({ toggleDrawer }) {
 
   return (
     <Box
-      sx={{ width: 300, mt: 2 }}
+      sx={{ width: 300, mt: 2, height: '50vh', overflowY: 'scroll' }}
       role="presentation"
       onClick={toggleDrawer && toggleDrawer(false)}
     >
