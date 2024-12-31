@@ -18,10 +18,11 @@
             justify-content: center;
             margin: 1rem 0;
             width: 100%;
-            transition: background-color 0.3s;
+            transition: transform 0.3s ease, color 0.3s ease;
 
             &:hover {
                 cursor: pointer;
+                transform: scale(1.1);
                 background-color: #4a73ab69;
                 border-radius: 1rem;
             }
