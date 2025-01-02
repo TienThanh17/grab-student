@@ -227,8 +227,15 @@ function MyPost() {
         <PostSelf handleClose={handleClosePostSelf} />
       </Modal>
 
-      <Modal open={openPostUpdate} onClose={handleClosePostUpdate} TransitionComponent={Fade}>
-        <PostUpdate handleClosePostUpdate={handleClosePostUpdate} fetchPosts={handleConfirm} />
+      <Modal
+        open={openPostUpdate}
+        onClose={handleClosePostUpdate}
+        TransitionComponent={Fade}
+      >
+        <PostUpdate 
+          handleClosePostUpdate={handleClosePostUpdate} 
+          fetchPosts={handleConfirm} 
+        />
       </Modal>
 
     </Stack>

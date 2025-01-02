@@ -1,5 +1,13 @@
 import axios from '@/configs/axios';
 
+
+export const getRatingService = (id) => {
+    const params = {
+        id
+    }
+    return axios.get('student/rating', { params });
+}
+
 export const loginService = (data) => {
     return axios.post('auth/login', data);
 }

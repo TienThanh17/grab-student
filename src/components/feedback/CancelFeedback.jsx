@@ -22,6 +22,7 @@ import { useSnackbar } from "notistack";
 import { createNotiService } from "@/services/notiService";
 import socket from "@/configs/socket";
 import { useRouter } from "next/navigation";
+import { cancelRideService } from "@/services/rideService";
 
 const StyledDialog = styled(Dialog)(({ theme }) => ({
     "& .MuiDialog-paper": {
@@ -46,7 +47,7 @@ const RatingContainer = styled(Box)(({ theme }) => ({
     marginBottom: theme.spacing(3)
 }));
 
-const FeedbackDialog = ({ open, handleCloseDialog, userData, isRider, ride, userId }) => {
+const CancelFeedbackDialog = ({ open, handleCloseDialog, userData, isRider, ride, userId, isCancelProactive }) => {
     const [rating, setRating] = useState(0);
     const [comment, setComment] = useState("");
     const [error, setError] = useState("");
@@ -88,7 +89,6 @@ const FeedbackDialog = ({ open, handleCloseDialog, userData, isRider, ride, user
                     setRating(0);
                     setComment("");
                     setError("");
-                    console.log('isRider', isRider);
                     if (isRider === false) {
                         router.push(`/ride/${ride.id}`)
                     }
@@ -97,20 +97,48 @@ const FeedbackDialog = ({ open, handleCloseDialog, userData, isRider, ride, user
             }
         } catch (error) {
             console.log(error);
-            if (error.response.data.code === 25) {
-                enqueueSnackbar(
-                    "Bạn đã đánh giá rồi",
-                    { variant: "error" }
-                );
-            } else {
-                enqueueSnackbar(
-                    "Lỗi",
-                    { variant: "error" }
-                );
-            }
-
+            enqueueSnackbar(
+                "Lỗi",
+                { variant: "error" }
+            );
         }
     };
+
+    const handleCancelRide = async () => {
+        try {
+            const res = await cancelRideService(ride.id)
+            if (res.data.code === 0) {
+                const resNoti = await createNotiService({
+                    senderId: userId,
+                    recipientId: userData.id,
+                    type: 'cancel_ride',
+                    rideId: ride.id,
+                });
+                if (resNoti.data.code === 0) {
+                    socket.emit("sendNotification", {
+                        senderId: userId,
+                        receiverId: userData.id,
+                        type: isCancelProactive ? 'proactive_cancel_ride' : 'passive_cancel_ride',
+                        ride: ride
+                    });
+                    enqueueSnackbar(
+                        "Đánh giá thành công",
+                        { variant: "success" }
+                    );
+                    setRating(0);
+                    setComment("");
+                    setError("");
+                    if (isRider === false) {
+                        router.push(`/ride/${ride.id}`)
+                    }
+                    handleCloseDialog();
+                }
+            }
+        } catch (error) {
+
+        }
+    }
+
 
     const isSubmitDisabled = !rating;
 
@@ -124,14 +152,16 @@ const FeedbackDialog = ({ open, handleCloseDialog, userData, isRider, ride, user
             disableScrollLock={true}
             disableEscapeKeyDown={true}
             onClose={(event, reason) => {
+                if (isCancelProactive) {
+                    handleCloseDialog();
+                }
                 if (reason === "backdropClick" || reason === "escapeKeyDown") {
                     return;
                 }
-                handleCloseDialog();
             }}
         >
             <DialogTitle id="feedback-dialog-title">
-                {isRider ? 'Đánh giá hành khách' : 'Đánh giá tài xế'}
+                {isCancelProactive ? `Hủy chuyến đi` : 'Chuyến đi đã bị hủy'}
             </DialogTitle>
 
             <DialogContent>
@@ -151,7 +181,7 @@ const FeedbackDialog = ({ open, handleCloseDialog, userData, isRider, ride, user
 
                 <RatingContainer>
                     <Typography component="legend" variant="subtitle1">
-                        Chuyến đi của bạn thế nào ?
+                        Phản hồi bạn đồng hành của bạn
                     </Typography>
                     <Rating
                         value={rating}
@@ -177,7 +207,7 @@ const FeedbackDialog = ({ open, handleCloseDialog, userData, isRider, ride, user
                             setError("");
                         }
                     }}
-                    placeholder="Kể về trải nghiệm của bạn"
+                    placeholder={isCancelProactive ? 'Lý do hủy chuyến đi' : 'Lý do chuyến đi bị hủy'}
                     variant="outlined"
                     aria-label="Feedback comments"
                     helperText={`${comment.length}/${maxChars} ký tự`}
@@ -191,9 +221,9 @@ const FeedbackDialog = ({ open, handleCloseDialog, userData, isRider, ride, user
             </DialogContent>
 
             <DialogActions>
-                {isRider && <Button onClick={handleCloseDialog} color="primary">
-                    Hủy
-                </Button>}
+                <Button onClick={handleCancelRide} color="error">
+                    Không đánh giá
+                </Button>
                 <Button
                     onClick={handleSubmit}
                     variant="contained"
@@ -207,4 +237,4 @@ const FeedbackDialog = ({ open, handleCloseDialog, userData, isRider, ride, user
     );
 };
 
-export default FeedbackDialog;
+export default CancelFeedbackDialog;

@@ -120,14 +120,6 @@ const RideRequest = ({ data, handleAccept, fetchRideRequest, clickedRequestId, p
         {/* Buttons */}
         <Stack direction='row' justifyContent="space-between" alignItems="center" mt={3}>
 
-          {/* <IconButton color="success" onClick={handleAcceptRequest}>
-            <CheckCircleIcon sx={{ fontSize: '2.5rem' }} />
-          </IconButton> */}
-
-          {/* <IconButton color="error" onClick={handleCancel}>
-            <CancelIcon sx={{ fontSize: '2.5rem' }} />
-          </IconButton> */}
-
           <Button color="error" onClick={handleCancel} variant="contained">
             Từ chối
           </Button>

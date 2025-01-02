@@ -204,7 +204,7 @@ function Ride() {
                     <RideComponent key={index} data={value} />
                 ))}
             </Stack>
-
+                
         </Stack>
     )
 }

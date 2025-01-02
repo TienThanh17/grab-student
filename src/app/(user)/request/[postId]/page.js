@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import line from "@/public/images/line.png";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import Image from "next/image";
-import { acceptRequestService, getRideRequestService } from '@/services/rideService';
+import { acceptRequestService, getRideRequestService, updateRideRequestService } from '@/services/rideService';
 import { getDirectionService, getMultiDirectionService } from '@/services/mapService';
 import mapboxgl from "mapbox-gl";
 import { setIsLoading } from '@/redux-toolkit/loadingSlice';
@@ -18,11 +18,16 @@ import { getPostByIdService } from '@/services/postService';
 import AccessTimeFilledIcon from '@mui/icons-material/AccessTimeFilled';
 import TwoWheelerIcon from '@mui/icons-material/TwoWheeler';
 import { useSnackbar } from 'notistack';
+import socket from '@/configs/socket';
+import empty from '@/public/images/empty-folder.png'
+import { createNotiService } from '@/services/notiService';
+
 
 function Request() {
   const { postId } = useParams();
   const [postData, setPostData] = useState(null)
-  const [rideRequest, setRideRequest] = useState(null)
+  const [rideRequest, setRideRequest] = useState([])
+  const [rideRequestClicked, setRideRequestClicked] = useState(null)
   const [duration, setDuration] = useState(null)
   const [distance, setDistance] = useState(null)
   const mapRef = useRef();
@@ -52,11 +57,24 @@ function Request() {
         distance: distance
       })
       if (res.data.code === 0) {
-        enqueueSnackbar(
-          "Chấp nhận thành công",
-          { variant: "success" }
-        );
-        router.push(`/ride/${res.data.data.id}`)
+        const resNoti = await createNotiService({
+          senderId: userInfo.id,
+          recipientId: rideRequestClicked.passenger.id,
+          type: 'accept_request',
+          rideId: res.data.data.id,
+        });
+        if (resNoti.data.code === 0) {
+          socket.emit("sendNotification", {
+            senderId: userInfo.id,
+            receiverId: rideRequestClicked.passenger.id,
+            type: 'accept_request'
+          });
+          enqueueSnackbar(
+            "Chấp nhận thành công",
+            { variant: "success" }
+          );
+          router.push(`/ride/${res.data.data.id}`)
+        }
       }
     } catch (error) {
       console.log(error);
@@ -69,8 +87,51 @@ function Request() {
     }
   }
 
+  const handleCancel = async () => {
+    dispatch(setIsLoading(true));
+    try {
+      const res = await updateRideRequestService(requestId.current, { status: 'rejected' });
+      if (res.data.code === 0) {
+        const resNoti = await createNotiService({
+          senderId: userInfo.id,
+          recipientId: rideRequestClicked.passenger.id,
+          type: 'reject_request',
+          postId: postData.id
+        });
+        if (resNoti.data.code === 0) {
+          socket.emit("sendNotification", {
+            senderId: userInfo.id,
+            receiverId: rideRequestClicked.passenger.id,
+            type: 'reject_request'
+          });
+
+          enqueueSnackbar(
+            "Từ chối yêu cầu thành công",
+            { variant: "success" }
+          );
+          requestId.current = null;
+          fetchRideRequest();
+          handleMapbox(postData);
+        }
+      }
+    } catch (error) {
+      console.log(error);
+      enqueueSnackbar(
+        "Lỗi",
+        { variant: "error" }
+      );
+    } finally {
+      dispatch(setIsLoading(false));
+    }
+  };
+
   const getDirection = async (startingLocation, destinationLocation) => {
     try {
+      if (!mapRef.current.isStyleLoaded()) {
+        await new Promise(resolve => {
+          mapRef.current.once('styledata', resolve);
+        });
+      }
       const res = await getDirectionService(startingLocation, destinationLocation);
       console.log(res.data.routes[0]);
       const data = res.data.routes[0];
@@ -181,20 +242,6 @@ function Request() {
         });
       }
 
-      // // Tính toán điểm giữa của tuyến đường
-      // const midIndex = Math.floor(route.length / 2);
-      // const midPoint = route[midIndex];
-
-      // // Tạo popup
-      // const popup = new mapboxgl.Popup({ closeOnClick: false })
-      //   .setLngLat(midPoint)
-      //   .setHTML(`
-      //             <h3>${Math.round(data.duration / 60)} phút</p>
-      //             <h4>${data.distance.toFixed(2)} m</p>
-      //           `
-      //   )
-      //   .addTo(mapRef.current);
-
       // Zoom để xem toàn bộ tuyến đường
       const bounds = new mapboxgl.LngLatBounds();
       route.forEach(coord => {
@@ -211,10 +258,10 @@ function Request() {
   };
 
   const handleClickRequest = (requestData) => {
-    console.log('postData', postData);
-    console.log('requestData', requestData);
-
+    // console.log('postData', postData);
+    // console.log('requestData', requestData);
     requestId.current = requestData.id;
+    setRideRequestClicked(requestData)
     const startingLocation = [postData.pickUpLon, postData.pickUpLat];
     const destinationLocation = [postData.dropOffLon, postData.dropOffLat];
     const pickUpLocation = [requestData.pickUpLon, requestData.pickUpLat];
@@ -298,6 +345,15 @@ function Request() {
       .then(() => console.log('Direction fetched successfully'))
       .catch((error) => console.error('Failed to fetch directions', error));
   };
+
+  useEffect(() => {
+    socket.on("getNotification", (data) => {
+      console.log(data);
+      if (data.type === 'cancel_request') {
+        fetchRideRequest();
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const fetchPostAndRideRequest = async () => {
@@ -435,16 +491,29 @@ function Request() {
               >
                 Chấp nhận
               </Button>
+              <Button
+                variant="contained"
+                color='error'
+                sx={{
+                  borderRadius: '100rem'
+                }}
+                onClick={() => handleCancel()}
+              >
+                Từ chối
+              </Button>
             </Stack>}
           </Box>
         </Box>
       </Paper>
 
-      {rideRequest?.map((item, index) => (
-        <Box key={index} sx={{ width: 1, mt: 4 }} onClick={() => handleClickRequest(item)}>
-          <RideRequest data={item} clickedRequestId={requestId} handleMapbox={handleMapbox} postData={postData} handleAccept={handleAccept} fetchRideRequest={fetchRideRequest} />
-        </Box>
-      ))}
+      {rideRequest.length > 0
+        ? rideRequest.map((item, index) => (
+          <Box key={index} sx={{ width: 1, mt: 4 }} onClick={() => handleClickRequest(item)}>
+            <RideRequest data={item} clickedRequestId={requestId} handleMapbox={handleMapbox} postData={postData} handleAccept={handleAccept} fetchRideRequest={fetchRideRequest} />
+          </Box>
+        ))
+        : <Image style={{marginTop: '2rem'}} src={empty} alt='empty' width={150} height={150}></Image>
+      }
     </Stack>
   )
 }

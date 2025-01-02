@@ -118,7 +118,13 @@ const Login = () => {
                 password
             });
             if (res.status === 200) {
-                if (!res.data.studentInfo.is2faEnabled) {
+                if(res.data.studentInfo.ridePoint === 0) {
+                    enqueueSnackbar(
+                        "Tài khoản hiện đang bị cấm",
+                        { variant: "error" }
+                    );
+                }
+                else if (!res.data.studentInfo.is2faEnabled) {
                     dispatch(login(res.data));
                     router.push('/rider');
                 } else {

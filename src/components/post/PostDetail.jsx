@@ -18,7 +18,7 @@ import TextField from "@mui/material/TextField";
 import InputAdornment from "@mui/material/InputAdornment";
 import Avatar from "@mui/material/Avatar";
 import { useRef, useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import Image from "next/image";
 import line from "@/public/images/line.png";
 import { useDebouncedState } from "@/utils/customHook";
@@ -29,10 +29,14 @@ import mapboxgl from "mapbox-gl";
 import { getSuggestPlaceService, getDirectionService, getMultiDirectionService } from "./../../services/mapService";
 import { createRideRequestService, acceptRequestService } from './../../services/rideService'
 import { useSnackbar } from "notistack";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
+import socket from "@/configs/socket";
+import { createNotiService } from "@/services/notiService";
+import { setIsLoading } from "@/redux-toolkit/loadingSlice";
 
 function PostDetail({ handleClose, fetchPosts }) {
   const params = useParams();
+  const router = useRouter();
   const { enqueueSnackbar } = useSnackbar();
   const postData = useSelector((state) => state.post.postData);
   const userInfo = useSelector((state) => state.user.userInfo);
@@ -71,6 +75,8 @@ function PostDetail({ handleClose, fetchPosts }) {
   const destinationTextRef = useRef('');
   const popperDestinationRef = useRef(null);
   const popperStartingRef = useRef(null);
+  const dispatch = useDispatch();
+
 
   const handleChangeStarting = (e) => {
     setStarting(e.target.value);
@@ -87,7 +93,8 @@ function PostDetail({ handleClose, fetchPosts }) {
   };
 
   const handleSubmit = async () => {
-    console.log('postData', postData);
+    // console.log('postData', postData);
+    dispatch(setIsLoading(true));
     try {
       if (params.postType === 'rider') {
         const data = {
@@ -105,11 +112,25 @@ function PostDetail({ handleClose, fetchPosts }) {
         }
         const res = await createRideRequestService(data);
         if (res.data.code === 0) {
-          enqueueSnackbar(
-            "Gửi yêu cầu thành công",
-            { variant: "success" }
-          );
-          handleClose();
+          const resNoti = await createNotiService({
+            senderId: userInfo.id,
+            recipientId: postData.student.id,
+            type: 'send_request',
+            postId: postData.id
+          });
+          if (resNoti.data.code === 0) {
+            socket.emit("sendNotification", {
+              senderId: userInfo.id,
+              receiverId: postData.student.id,
+              type: 'send_request'
+            });
+
+            enqueueSnackbar(
+              "Gửi yêu cầu thành công",
+              { variant: "success" }
+            );
+            handleClose();
+          }
         }
       } else if (params.postType === 'passenger') {
         const data = {
@@ -126,26 +147,43 @@ function PostDetail({ handleClose, fetchPosts }) {
           'distance': distance
         }
         const res = await createRideRequestService(data);
-        const res2 = await acceptRequestService({
-          requestId: res.data.data.id,
-          riderId: userInfo.id,
-          riderStartLocation: startingTextRef.current,
-          riderEndLocation: destinationTextRef.current,
-          startLon: postData.pickUpLon,
-          startLat: postData.pickUpLat,
-          endLon: postData.dropOffLon,
-          endLat: postData.dropOffLat,
-          estimatedTime: riderDuration,
-          distance: riderDistance
-        })
-        if (res2.data.code === 0) {
-          enqueueSnackbar(
-            "Gửi yêu cầu thành công",
-            { variant: "success" }
-          );
-          handleClose();
-          fetchPosts();
+        if (res.data.code === 0) {
+          const res2 = await acceptRequestService({
+            requestId: res.data.data.id,
+            riderId: userInfo.id,
+            riderStartLocation: startingTextRef.current ?? postData.pickUpLocation,
+            riderEndLocation: destinationTextRef.current ?? postData.dropOffLocation,
+            startLon: postData.pickUpLon,
+            startLat: postData.pickUpLat,
+            endLon: postData.dropOffLon,
+            endLat: postData.dropOffLat,
+            estimatedTime: riderDuration ?? duration,
+            distance: riderDistance ?? distance
+          })
+          if (res2.data.code === 0) {
+            const resNoti = await createNotiService({
+              senderId: userInfo.id,
+              recipientId: postData.student.id,
+              type: 'accept_request',
+              rideId: res2.data.data.id
+            });
+            if (resNoti.data.code === 0) {
+              socket.emit("sendNotification", {
+                senderId: userInfo.id,
+                receiverId: postData.student.id,
+                type: 'accept_request',
+                ride: res2.data.data
+              });
+              enqueueSnackbar(
+                "Chấp nhận yêu cầu thành công",
+                { variant: "success" }
+              );
+              handleClose();
+              router.push(`/ride/${res2.data.data.id}`)
+            }
+          }
         }
+
       }
     } catch (error) {
       console.log(error)
@@ -160,6 +198,8 @@ function PostDetail({ handleClose, fetchPosts }) {
           { variant: "error" }
         );
       }
+    } finally {
+      dispatch(setIsLoading(false));
     }
   };
 
@@ -296,6 +336,10 @@ function PostDetail({ handleClose, fetchPosts }) {
 
   const getDirection = async (startingLocation, destinationLocation) => {
     try {
+      // Đảm bảo bản đồ đã được tải
+      if (!mapRef.current.isStyleLoaded()) {
+        await new Promise(resolve => mapRef.current.once('style.load', resolve));
+      }
       const res = await getDirectionService(startingLocation, destinationLocation);
       // console.log(res.data.routes[0]);
       const data = res.data.routes[0];
@@ -319,10 +363,6 @@ function PostDetail({ handleClose, fetchPosts }) {
           coordinates: route
         }
       };
-      // Đảm bảo bản đồ đã được tải
-      if (!mapRef.current.isStyleLoaded()) {
-        await new Promise(resolve => mapRef.current.once('style.load', resolve));
-      }
       // Đợi cho style được tải xong
       // mapRef.current.on('style.load', () => {
       // Nếu tuyến đường đã tồn tại trên bản đồ, cập nhật nó
@@ -614,16 +654,6 @@ function PostDetail({ handleClose, fetchPosts }) {
           />
         </Stack>
         <Mapbox mapRef={mapRef} setStarting={setStarting} setDestination={setDestination} setIsAddStartingMarker={setIsAddStartingMarker} setIsAddDestinationMarker={setIsAddDestinationMarker} setRetrieveDestination={setRetrieveDestination} setRetrieveStarting={setRetrieveStarting} destinationTextRef={destinationTextRef} startingTextRef={startingTextRef} />
-        {/* <Box
-          sx={{
-            bgcolor: "white",
-            width: 1,
-            height: { xs: 1, sm: 1, md: "25rem" },
-            border: "1px solid red",
-            mt: { xs: 0, md: 2 },
-          }}
-          ref={mapContainerRef}
-        ></Box> */}
       </Box>
       <Box
         sx={{
@@ -661,7 +691,7 @@ function PostDetail({ handleClose, fetchPosts }) {
           </Stack>
           <Chip
             icon={<StarRoundedIcon sx={{ color: "gold !important" }} />}
-            label={postData.rating}
+            label={postData.student.rating}
 
             sx={{ fontWeight: "bold", bgcolor: "white" }}
             variant="outlined"

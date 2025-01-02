@@ -8,12 +8,6 @@ import {
     Typography,
     Button,
     Grid,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    useTheme,
-    useMediaQuery,
     Avatar,
     Stack
 } from "@mui/material";
@@ -23,14 +17,17 @@ import { GiPathDistance } from "react-icons/gi";
 import Mapbox from "@/components/mapbox/Mapbox";
 import mapboxgl from "mapbox-gl";
 import { getOneRideService } from "@/services/rideService";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useSnackbar } from "notistack";
 import { useDispatch, useSelector } from "react-redux";
 import { setIsLoading } from "@/redux-toolkit/loadingSlice";
 import { getMultiDirectionService } from "@/services/mapService";
 import Image from "next/image";
 import goingGif from '@/public/images/going.gif'
+import like from '@/public/images/like.gif'
 import Feedback from "@/components/feedback/feedback";
+import socket from "@/configs/socket";
+import CancelFeedbackDialog from "@/components/feedback/CancelFeedback";
 
 const StyledCard = styled(Card)(({ theme }) => ({
     maxWidth: 1200,
@@ -45,6 +42,7 @@ const StyledCard = styled(Card)(({ theme }) => ({
 
 const TripInformation = () => {
     const [openDialog, setOpenDialog] = useState(false);
+    const [openCancelDialog, setOpenCancelDialog] = useState(false);
     const [ride, setRide] = useState(null);
     const params = useParams();
     const mapRef = useRef();
@@ -59,6 +57,11 @@ const TripInformation = () => {
 
     const getMultiDirection = async (start1, end1, start2, end2) => {
         try {
+            if (!mapRef.current.isStyleLoaded()) {
+                await new Promise(resolve => {
+                    mapRef.current.once('styledata', resolve);
+                });
+            }
             const res = await getMultiDirectionService(start1, end1, start2, end2);
 
             const data = res.data.routes[0];
@@ -72,46 +75,63 @@ const TripInformation = () => {
                     coordinates: route
                 }
             };
-            mapRef.current.on('style.load', () => {
-                // Thêm hoặc cập nhật tuyến đường trên bản đồ
-                if (mapRef.current.getSource('route1')) {
-                    mapRef.current.getSource('route1').setData(geojson);
-                } else {
-                    mapRef.current.addSource('route1', {
-                        type: 'geojson',
-                        data: geojson
-                    });
 
-                    mapRef.current.addLayer({
-                        id: 'route1',
-                        type: 'line',
-                        source: 'route1',
-                        layout: {
-                            'line-join': 'round',
-                            'line-cap': 'round'
-                        },
-                        paint: {
-                            'line-color': '#4285F4',
-                            'line-width': 5,
-                            'line-opacity': 0.75
-                        }
-                    });
-                }
-
-                // Zoom để xem toàn bộ tuyến đường
-                const bounds = new mapboxgl.LngLatBounds();
-                route.forEach(coord => {
-                    bounds.extend(coord);
+            if (mapRef.current.getSource('route1')) {
+                mapRef.current.getSource('route1').setData(geojson);
+            } else {
+                mapRef.current.addSource('route1', {
+                    type: 'geojson',
+                    data: geojson
                 });
 
-                mapRef.current.fitBounds(bounds, {
-                    padding: 100
+                mapRef.current.addLayer({
+                    id: 'route1',
+                    type: 'line',
+                    source: 'route1',
+                    layout: {
+                        'line-join': 'round',
+                        'line-cap': 'round'
+                    },
+                    paint: {
+                        'line-color': '#4285F4',
+                        'line-width': 5,
+                        'line-opacity': 0.75
+                    }
                 });
-            })
+            }
+
+            // Zoom để xem toàn bộ tuyến đường
+            const bounds = new mapboxgl.LngLatBounds();
+            route.forEach(coord => {
+                bounds.extend(coord);
+            });
+
+            mapRef.current.fitBounds(bounds, {
+                padding: 100
+            });
         } catch (err) {
             console.log(err);
         }
     };
+
+    const getRide = async () => {
+        dispatch(setIsLoading(true));
+        try {
+            const res = await getOneRideService(
+                params.rideId
+            );
+            const ride = res.data.data;
+            setRide(ride);
+        } catch (error) {
+            console.log(error)
+            enqueueSnackbar(
+                "Lỗi lấy dữ liệu",
+                { variant: "error" }
+            );
+        } finally {
+            dispatch(setIsLoading(false));
+        }
+    }
 
     useEffect(() => {
         const fetchRide = async () => {
@@ -136,7 +156,7 @@ const TripInformation = () => {
         }
 
         const handleMapbox = (ride) => {
-            // console.log(ride);
+            console.log(ride);
             // Remove old markers if they exist
             if (startMarkerRef.current) {
                 startMarkerRef.current.remove();
@@ -171,27 +191,50 @@ const TripInformation = () => {
             const pickUpMarkerElement = document.createElement('div');
             pickUpMarkerElement.className = 'postStartingMarker';
 
+            if (userId === ride.rider.id) {
+                // Add markers to the map
+                startMarkerRef.current = new mapboxgl.Marker(startMarkerElement)
+                    .setLngLat(startingLocation)
+                    .setPopup(startPopup)
+                    .addTo(mapRef.current);
 
-            // Add markers to the map
-            startMarkerRef.current = new mapboxgl.Marker(startMarkerElement)
-                .setLngLat(startingLocation)
-                .setPopup(startPopup)
-                .addTo(mapRef.current);
+                endMarkerRef.current = new mapboxgl.Marker({ color: 'red', rotation: 0 })
+                    .setLngLat(destinationLocation)
+                    .setPopup(destinationPopup)
+                    .addTo(mapRef.current);
 
-            endMarkerRef.current = new mapboxgl.Marker({ color: 'red', rotation: 0 })
-                .setLngLat(destinationLocation)
-                .setPopup(destinationPopup)
-                .addTo(mapRef.current);
+                pickUpMarkerRef.current = new mapboxgl.Marker(pickUpMarkerElement)
+                    .setLngLat(pickUpLocation)
+                    .setPopup(pickUpPopup)
+                    .addTo(mapRef.current);
 
-            pickUpMarkerRef.current = new mapboxgl.Marker(pickUpMarkerElement)
-                .setLngLat(pickUpLocation)
-                .setPopup(pickUpPopup)
-                .addTo(mapRef.current);
+                dropOffMarkerRef.current = new mapboxgl.Marker({ color: 'green', rotation: 0 })
+                    .setLngLat(dropOffLocation)
+                    .setPopup(dropOffPopup)
+                    .addTo(mapRef.current);
+            } else {
+                // Add markers to the map
+                startMarkerRef.current = new mapboxgl.Marker(pickUpMarkerElement)
+                    .setLngLat(startingLocation)
+                    .setPopup(startPopup)
+                    .addTo(mapRef.current);
 
-            dropOffMarkerRef.current = new mapboxgl.Marker({ color: 'green', rotation: 0 })
-                .setLngLat(dropOffLocation)
-                .setPopup(dropOffPopup)
-                .addTo(mapRef.current);
+                endMarkerRef.current = new mapboxgl.Marker({ color: 'green', rotation: 0 })
+                    .setLngLat(destinationLocation)
+                    .setPopup(destinationPopup)
+                    .addTo(mapRef.current);
+
+                pickUpMarkerRef.current = new mapboxgl.Marker(startMarkerElement)
+                    .setLngLat(pickUpLocation)
+                    .setPopup(pickUpPopup)
+                    .addTo(mapRef.current);
+
+                dropOffMarkerRef.current = new mapboxgl.Marker({ color: 'red', rotation: 0 })
+                    .setLngLat(dropOffLocation)
+                    .setPopup(dropOffPopup)
+                    .addTo(mapRef.current);
+            }
+
 
             // Get directions
             getMultiDirection(startingLocation, destinationLocation, pickUpLocation, dropOffLocation)
@@ -201,17 +244,30 @@ const TripInformation = () => {
         fetchRide();
     }, [params])
 
-    const handleShareTrip = () => {
+    const handleFeedbackTrip = () => {
         setOpenDialog(true);
     };
 
     const handleCancelTrip = () => {
-        setOpenDialog(true);
+        setOpenCancelDialog(true);
     };
 
     const handleCloseDialog = () => {
         setOpenDialog(false);
     };
+
+    const handleCloseCancelDialog = () => {
+        setOpenCancelDialog(false);
+    };
+
+    useEffect(() => {
+        socket.on("getNotification", (data) => {
+            if (data.type === 'rider-review') {
+                getRide();
+            }
+        });
+    }, []);
+
 
     if (!ride) return null;
 
@@ -317,28 +373,55 @@ const TripInformation = () => {
                             <Box
                                 component="span"
                                 sx={{
-                                    color: ride.status === "GOING" ? (theme) => theme.palette.primary.main : "red",
+                                    color: ride.status === "GOING" || ride.status === 'DONE' ? (theme) => theme.palette.primary.main : "red",
                                 }}
                             >
-                                {ride.status === "GOING" ? "Đang diễn ra" : ride.status === "DONE" ? 'Đã hoàn thành chuyến' : 'Đã hủy chuyến'}
+                                {ride.status === "GOING" ? "Đang diễn ra" : ride.status === "DONE" ? 'Chuyến đã hoàn thành' : 'Đã hủy chuyến'}
                             </Box>
                         </Typography>
-                        <Image src={goingGif} alt="going" style={{ width: "10rem", height: "10rem" }} />
+                        <Image unoptimized src={ride.status === 'GOING' ? goingGif : ride.status === 'DONE' ? like : null} alt="going" style={{ width: "10rem", height: "10rem" }} />
                     </Stack>
-                    <Stack direction="row" alignItems='flex-end' gap='1rem'>
-                        <Button variant="outlined" sx={{ height: '20%' }} startIcon={<FaShare />} onClick={handleShareTrip}>
+                    {ride.status === 'GOING' && <Stack direction="row" alignItems='flex-end' gap='1rem'>
+                        {ride.rider.id === userId && <Button variant="outlined" sx={{ height: '20%' }} startIcon={<FaShare />} onClick={handleFeedbackTrip}>
                             Hoàn thành chuyến đi
-                        </Button>
+                        </Button>}
                         <Button variant="contained" sx={{ height: '20%' }} color="error" startIcon={<FaTimes />} onClick={handleCancelTrip}>
                             Hủy chuyến
                         </Button>
-                    </Stack>
+                    </Stack>}
                 </Stack>
             </CardContent>
             {
-                userId === ride.rider.id 
-                ? <Feedback open={openDialog} handleCloseDialog={handleCloseDialog} userData={ride.passenger} isRider={true} /> 
-                : <Feedback open={openDialog} handleCloseDialog={handleCloseDialog} userData={ride.rider} isRider={false} />
+                userId === ride.rider.id &&
+                <Feedback
+                    open={openDialog}
+                    handleCloseDialog={handleCloseDialog}
+                    userData={ride.passenger}
+                    isRider={true}
+                    ride={ride}
+                    userId={userId}
+                />
+            }
+            {
+                userId === ride.rider.id
+                    ? <CancelFeedbackDialog
+                        open={openCancelDialog}
+                        handleCloseDialog={handleCloseCancelDialog}
+                        userData={ride.passenger}
+                        isRider={true}
+                        ride={ride}
+                        userId={userId}
+                        isCancelProactive={true}
+                    />
+                    : <CancelFeedbackDialog
+                        open={openCancelDialog}
+                        handleCloseDialog={handleCloseCancelDialog}
+                        userData={ride.rider}
+                        isRider={false}
+                        ride={ride}
+                        userId={userId}
+                        isCancelProactive={true}
+                    />
             }
         </StyledCard>
     );

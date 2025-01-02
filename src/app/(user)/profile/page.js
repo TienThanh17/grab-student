@@ -2,10 +2,10 @@
 
 import { Paper, Box, Typography, Stack, Rating, TableContainer, Table, TableRow, TableCell, TableBody, FormControlLabel, Dialog, DialogTitle, DialogContent, TextField, Button, DialogActions, InputAdornment, Avatar } from '@mui/material'
 import Switch from '@mui/material/Switch';
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Image from "next/image";
 import { useSelector, useDispatch } from 'react-redux';
-import { changePasswordService, update2fa } from '@/services/userService';
+import { changePasswordService, getRatingService, update2fa } from '@/services/userService';
 import { useSnackbar } from 'notistack';
 import { updateUser2fa } from '@/redux-toolkit/userSlice';
 import Loading from '@/components/loading/Loading';
@@ -30,6 +30,7 @@ function Profile() {
   const user = useSelector((state) => state.user.userInfo)
   const [checked, setChecked] = useState(user?.is2faEnabled);
   const [loading, setLoading] = useState(false);
+  const [rating, setRating] = useState(null);
   const { enqueueSnackbar } = useSnackbar();
   const dispatch = useDispatch();
   // State cho các dialog
@@ -84,6 +85,20 @@ function Profile() {
     }
   };
 
+  useEffect(() => {
+    const fetchRating = async () => {
+      try {
+        const res = await getRatingService(user.id);
+        if (res.data.code === 0) {
+          setRating(res.data.data);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    fetchRating()
+  }, [user.id])
+
   return (
     <Paper elevation={3} sx={{ borderRadius: 7, overflow: "hidden", mt: 4 }}>
       <Box sx={{ width: 1, textAlign: "center", bgcolor: "primary.main", p: 2, color: 'white' }}>
@@ -94,7 +109,7 @@ function Profile() {
           <Avatar src={user.avatarUrl} alt="avt" sx={{ width: '6rem', height: '6rem', borderRadius: '5rem' }} />
           <Typography variant="h6" sx={{ mt: 2 }}>{user.name}</Typography>
         </Stack>
-        <Rating name="size-large" defaultValue={4} size="large" readOnly />
+        <Rating name="size-large" value={rating} size="large" readOnly  precision={0.5}/>
         <Stack direction='column' justifyContent='center' alignItems='flex-start' ml={5} mt='30px'>
           <FormControlLabel
             sx={{

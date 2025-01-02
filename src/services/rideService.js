@@ -42,4 +42,15 @@ export const getOneRideService = (id) => {
     return axios.get(`ride/${id}`);
 }
 
+export const doneRideService = (id) => {
+
+    return axios.put(`ride/update/rideDone?rideId=${id}`);
+}
+
+export const cancelRideService = (id) => {
+
+    return axios.put(`ride/update/rideCancel?rideId=${id}`);
+}
+
+
 

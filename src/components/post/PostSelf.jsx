@@ -32,24 +32,17 @@ function PostSelf({ handleClose }) {
     const destinationMarkerRef = useRef(null);
     const startingTextRef = useRef('');
     const destinationTextRef = useRef('');
-    const [duration, setDuration] = useState(null)
-    const [distance, setDistance] = useState(null)
 
     const getDirection = async (startingLocation, destinationLocation) => {
         try {
+            if (!mapRef.current.isStyleLoaded()) {
+                await new Promise(resolve => {
+                    mapRef.current.once('styledata', resolve);
+                });
+            }
             const res = await getDirectionService(startingLocation, destinationLocation);
             // console.log(res.data.routes[0]);
             const data = res.data.routes[0];
-            const durationInMinutes = data.duration / 60; // Chuyển giây thành phút
-            const formattedDuration =
-                durationInMinutes > 60
-                    ? `${Math.floor(durationInMinutes / 60)} giờ ${Math.round(durationInMinutes % 60)} phút`
-                    : `${Math.round(durationInMinutes)} phút`;
-            // Format distance
-            const formattedDistance = `${(data.distance / 1000).toFixed(1)} km`;
-
-            setDistance(formattedDistance);
-            setDuration(formattedDuration);
 
             const route = data.geometry.coordinates;
             const geojson = {
@@ -61,46 +54,43 @@ function PostSelf({ handleClose }) {
                 }
             };
 
-            // Đợi cho style được tải xong
-            mapRef.current.on('style.load', () => {
-                // Nếu tuyến đường đã tồn tại trên bản đồ, cập nhật nó
-                if (mapRef.current.getSource('route1')) {
-                    mapRef.current.getSource('route1').setData(geojson);
-                }
-                // Nếu không, thêm một lớp mới
-                else {
-                    mapRef.current.addSource(`route1`, {
-                        type: 'geojson',
-                        data: geojson
-                    });
-
-                    mapRef.current.addLayer({
-                        id: 'route1',
-                        type: 'line',
-                        source: 'route1',
-                        layout: {
-                            'line-join': 'round',
-                            'line-cap': 'round'
-                        },
-                        paint: {
-                            'line-color': '#4285F4',
-                            'line-width': 5,
-                            'line-opacity': 0.75
-                        }
-                    });
-                }
-
-                // Zoom out để xem toàn bộ tuyến đường
-                const coordinates = geojson.geometry.coordinates;
-                const bounds = new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]);
-
-                for (const coord of coordinates) {
-                    bounds.extend(coord);
-                }
-
-                mapRef.current.fitBounds(bounds, {
-                    padding: 100
+            // Nếu tuyến đường đã tồn tại trên bản đồ, cập nhật nó
+            if (mapRef.current.getSource('route1')) {
+                mapRef.current.getSource('route1').setData(geojson);
+            }
+            // Nếu không, thêm một lớp mới
+            else {
+                mapRef.current.addSource(`route1`, {
+                    type: 'geojson',
+                    data: geojson
                 });
+
+                mapRef.current.addLayer({
+                    id: 'route1',
+                    type: 'line',
+                    source: 'route1',
+                    layout: {
+                        'line-join': 'round',
+                        'line-cap': 'round'
+                    },
+                    paint: {
+                        'line-color': '#4285F4',
+                        'line-width': 5,
+                        'line-opacity': 0.75
+                    }
+                });
+            }
+
+            // Zoom out để xem toàn bộ tuyến đường
+            const coordinates = geojson.geometry.coordinates;
+            const bounds = new mapboxgl.LngLatBounds(coordinates[0], coordinates[0]);
+
+            for (const coord of coordinates) {
+                bounds.extend(coord);
+            }
+
+            mapRef.current.fitBounds(bounds, {
+                padding: 100
             });
 
         } catch (err) {
@@ -123,7 +113,7 @@ function PostSelf({ handleClose }) {
 
         // Tạo một marker tùy chỉnh
         const el = document.createElement('div');
-        el.className = 'postStartingMarker';
+        el.className = 'marker';
         // Tạo popup cho điểm bắt đầu
         const startPopup = new mapboxgl.Popup({ offset: 25 }).setText('Điểm bắt đầu');
         const destinationPopup = new mapboxgl.Popup({ offset: 25 }).setText('Điểm đến');
@@ -133,7 +123,7 @@ function PostSelf({ handleClose }) {
             .setPopup(startPopup)
             .addTo(mapRef.current);
 
-        postDestinationMarkerRef.current = new mapboxgl.Marker({ color: "green", rotation: 0 })
+        postDestinationMarkerRef.current = new mapboxgl.Marker({ color: "red", rotation: 0 })
             .setLngLat(destinationLocation)
             .setPopup(destinationPopup)
             .addTo(mapRef.current);
@@ -246,7 +236,7 @@ function PostSelf({ handleClose }) {
                     </Stack>
                     <Chip
                         icon={<StarRoundedIcon sx={{ color: "gold !important" }} />}
-                        label={postData.rating}
+                        label={postData.student.rating}
 
                         sx={{ fontWeight: "bold", bgcolor: "white" }}
                         variant="outlined"

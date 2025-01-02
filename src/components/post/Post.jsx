@@ -19,7 +19,6 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import { useState } from "react";
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import TwoWheelerIcon from '@mui/icons-material/TwoWheeler';
-import PostSelf from '@/components/post/PostSelf'
 import { setIsLoading } from "@/redux-toolkit/loadingSlice";
 import { updatePostService } from "@/services/postService";
 import { useSnackbar } from "notistack";
@@ -188,7 +187,7 @@ export default function Post({ data, handleOpen, isMyPostPage, handleOpenPostUpd
           </Stack>
           <Chip
             icon={<StarRoundedIcon sx={{ color: "gold !important" }} />}
-            label={data.rating ?? null}
+            label={data.student.rating}
           />
         </Stack>
         <Typography variant="subtitle1" >

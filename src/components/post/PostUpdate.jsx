@@ -474,7 +474,7 @@ function PostUpdate({ handleClosePostUpdate, fetchPosts }) {
             value={text}
             onChange={handleChangeText}
           />
-          <Button variant="contained" onClick={handleSubmit}>Đăng</Button>
+          <Button variant="contained" onClick={handleSubmit}>Lưu thay đổi</Button>
         </Stack>
       </Stack>
       <Popper

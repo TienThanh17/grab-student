@@ -8,7 +8,7 @@ function SnackbarProvider({ children }) {
       maxSnack={3} // Số lượng thông báo tối đa hiển thị cùng lúc
       anchorOrigin={{
         vertical: "top", // Vị trí dọc: 'top' hoặc 'bottom'
-        horizontal: "right", // Vị trí ngang: 'left', 'center', 'right'
+        horizontal: "left", // Vị trí ngang: 'left', 'center', 'right'
       }}
       autoHideDuration={3000} // Thời gian tự động ẩn (ms)
     >
