@@ -1,0 +1,72 @@
+.GridData-Global {
+    width: 87rem;
+    margin-top: 20px;
+    justify-content: center;
+}
+
+.GridData-Icon {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+    height: 3rem;
+    margin-bottom: 20px;
+}
+
+.Icon-Data {
+    margin-right: 20px;
+    font-size: 35px;
+    color: rgb(42, 82, 138);
+    transition: transform 0.3s ease, color 0.3s ease;
+}
+
+.Icon-Data:hover {
+    transform: scale(1.2);
+    color: #ff5722;
+}
+
+
+.GridData-Header {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    margin-right: 5rem;
+    width: 87rem;
+    height: 5rem;
+}
+
+.GridData-Content {
+    align-items: center;
+    justify-content: center;
+}
+
+.banned-row {
+    background-color: rgba(228, 34, 34, 0.1);
+}
+
+.center-align {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-title {
+    margin-bottom: 10px;
+}
+
+.dou-css {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    margin-top: 50px;
+    margin-bottom: 50px;
+}
+
+.dou-css-delete {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
