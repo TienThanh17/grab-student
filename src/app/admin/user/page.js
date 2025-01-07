@@ -102,6 +102,13 @@ export default function DataTable() {
     };
 
     const handleCreate = async () => {
+        const emailExists = rows.some(row => row.email === newStudent.email);
+
+        if (emailExists) {
+            enqueueSnackbar("Email already exists!", { variant: "error" });
+            return;
+        }
+
         try {
             await createUserManagerService(newStudent);
             await fetchData();
@@ -156,6 +163,15 @@ export default function DataTable() {
     };
 
     const handleSave = async () => {
+        const emailExists = rows.some(
+            row => row.email === selectedStudent.email && row.id !== selectedStudent.id
+        );
+
+        if (emailExists) {
+            enqueueSnackbar("Email already exists!", { variant: "error" });
+            return;
+        }
+
         const formattedData = {
             email: selectedStudent.email,
             name: selectedStudent.name,
@@ -178,16 +194,17 @@ export default function DataTable() {
             enqueueSnackbar("Success Update!", { variant: "success" });
             setOpen(false);
         } catch (error) {
-
             console.error("Error updating student:", error);
             enqueueSnackbar("Failed to update student!", { variant: "error" });
         }
     };
 
+
     const fetchData = async () => {
         try {
             const response = await getUserManagerService();
             setRows(response.data);
+            console.log(row);
             setLoading(false);
         } catch (error) {
             console.error("Error fetching data:", error);
@@ -212,7 +229,7 @@ export default function DataTable() {
                         rows={rows}
                         columns={columns}
                         initialState={{ pagination: { paginationModel } }}
-                        pageSizeOptions={[10, 15]}
+                        pageSizeOptions={[5, 10]}
                         checkboxSelection
                         loading={loading}
                         className="GridData-Content"
