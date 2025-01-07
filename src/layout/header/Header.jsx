@@ -34,13 +34,10 @@ import { useRouter } from 'next/navigation';
 import { useDispatch, useSelector } from "react-redux";
 import { logout } from '@/redux-toolkit/userSlice';
 import Notification from "@/components/notification/Notification";
-import { countUnReadService, getNotiByRecipientService } from "@/services/notiService";
 import socket from "@/configs/socket";
 import Feedback from "@/components/feedback/feedback";
 import { cancelRideService, doneRideService } from "@/services/rideService";
 import MessHeader from "@/components/mess/MessHeader";
-import { setConversations } from "@/redux-toolkit/messSlice";
-import { getConversationsService, getCountUnreadService } from "@/services/messageService";
 import { setIsLoading } from "@/redux-toolkit/loadingSlice";
 import { useGlobalContext } from "@/provider/GlobalContext";
 import CancelFeedbackDialog from "@/components/feedback/CancelFeedback";
@@ -73,8 +70,8 @@ export default function Header() {
 
   const handleNotification = useCallback((data) => {
     console.log('noti-data', data);
-    countUnreadNoti(userInfo.id);
-    fetchNotification(userInfo.id);
+    countUnreadNoti(userInfo?.id);
+    fetchNotification(userInfo?.id);
     if (data.type === 'passenger-review') {
       setNotiData(data)
       setOpenReview(true);
@@ -94,19 +91,19 @@ export default function Header() {
         console.log(error);
       }
     }
-  }, [countUnreadNoti, fetchNotification, userInfo.id]);
+  }, [countUnreadNoti, fetchNotification, userInfo?.id]);
 
   const handleNewMessage = useCallback(() => {
-    fetchConversation(userInfo.id);
-    fetchCountUnreadMess(userInfo.id);
-  }, [fetchConversation, fetchCountUnreadMess, userInfo.id]);
+    fetchConversation(userInfo?.id);
+    fetchCountUnreadMess(userInfo?.id);
+  }, [fetchConversation, fetchCountUnreadMess, userInfo?.id]);
 
   useEffect(() => {
-    countUnreadNoti(userInfo.id);
-    fetchNotification(userInfo.id);
-    fetchConversation(userInfo.id);
-    fetchCountUnreadMess(userInfo.id);
-    socket.emit("newUser", userInfo.id);
+    countUnreadNoti(userInfo?.id);
+    fetchNotification(userInfo?.id);
+    fetchConversation(userInfo?.id);
+    fetchCountUnreadMess(userInfo?.id);
+    socket.emit("newUser", userInfo?.id);
 
     socket.on("getNotification", handleNotification);
     socket.on("getMessage", handleNewMessage);
@@ -115,7 +112,7 @@ export default function Header() {
       socket.off("getNotification", handleNotification);
       socket.off("getMessage", handleNewMessage);
     };
-  }, [userInfo.id]);
+  }, [userInfo?.id]);
 
   const handleClickNoti = (event) => setNotiAnchorEl(event.currentTarget);
   const handleCloseNoti = () => setNotiAnchorEl(null);
@@ -412,9 +409,9 @@ export default function Header() {
         <MessHeader handleCloseMess={handleCloseMess} />
       </Popover>
 
-      {notiData?.type === 'passenger-review' && <Feedback open={openReview} handleCloseDialog={handleCloseReview} userData={notiData.ride.rider} isRider={false} ride={notiData.ride} userId={userInfo.id} />}
-      {notiData?.type === 'rider_proactive_cancel' && <CancelFeedbackDialog open={openCancelReview} handleCloseDialog={handleCloseCancelReview} userData={notiData.ride.rider} isRider={false} ride={notiData.ride} userId={userInfo.id} />}
-      {notiData?.type === 'passenger_proactive_cancel' && <CancelFeedbackDialog open={openCancelReview} handleCloseDialog={handleCloseCancelReview} userData={notiData.ride.passenger} isRider={true} ride={notiData.ride} userId={userInfo.id} />}
+      {notiData?.type === 'passenger-review' && <Feedback open={openReview} handleCloseDialog={handleCloseReview} userData={notiData.ride.rider} isRider={false} ride={notiData.ride} userId={userInfo?.id} />}
+      {notiData?.type === 'rider_proactive_cancel' && <CancelFeedbackDialog open={openCancelReview} handleCloseDialog={handleCloseCancelReview} userData={notiData.ride.rider} isRider={false} ride={notiData.ride} userId={userInfo?.id} />}
+      {notiData?.type === 'passenger_proactive_cancel' && <CancelFeedbackDialog open={openCancelReview} handleCloseDialog={handleCloseCancelReview} userData={notiData.ride.passenger} isRider={true} ride={notiData.ride} userId={userInfo?.id} />}
     </Box>
   );
 }

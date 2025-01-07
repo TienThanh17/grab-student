@@ -88,7 +88,6 @@ const FeedbackDialog = ({ open, handleCloseDialog, userData, isRider, ride, user
                     setRating(0);
                     setComment("");
                     setError("");
-                    console.log('isRider', isRider);
                     if (isRider === false) {
                         router.push(`/ride/${ride.id}`)
                     }

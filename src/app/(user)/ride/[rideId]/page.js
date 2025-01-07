@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
     Box,
     Card,
@@ -54,7 +54,7 @@ const TripInformation = () => {
     const { enqueueSnackbar } = useSnackbar();
     const dispatch = useDispatch();
     const userId = useSelector((state) => state.user.userInfo.id)
-
+    const router = useRouter();
 
     const getMultiDirection = async (start1, end1, start2, end2) => {
         try {
@@ -115,24 +115,19 @@ const TripInformation = () => {
         }
     };
 
-    const getRide = async () => {
+    const getRide = useCallback(async () => {
         dispatch(setIsLoading(true));
         try {
-            const res = await getOneRideService(
-                params.rideId
-            );
+            const res = await getOneRideService(params.rideId);
             const ride = res.data.data;
             setRide(ride);
         } catch (error) {
-            console.log(error)
-            enqueueSnackbar(
-                "Lỗi lấy dữ liệu",
-                { variant: "error" }
-            );
+            console.log(error);
+            enqueueSnackbar("Lỗi lấy dữ liệu", { variant: "error" });
         } finally {
             dispatch(setIsLoading(false));
         }
-    }
+    }, [dispatch, enqueueSnackbar, params.rideId]);
 
     useEffect(() => {
         const fetchRide = async () => {
@@ -261,12 +256,20 @@ const TripInformation = () => {
     };
 
     useEffect(() => {
-        socket.on("getNotification", (data) => {
+        const handleNotification = (data) => {
+            console.log('notidata', data)
             if (data.type === 'rider-review' || data.type === 'rider_passive_cancel' || data.type === 'passenger_passive_cancel') {
                 getRide();
+                // router.push(`/ride/${ride.id}`)
             }
-        });
-    }, []);
+        };
+
+        socket.on("getNotification", handleNotification);
+
+        // return () => {
+        //     socket.off("getNotification", handleNotification);
+        // };
+    }, []); 
 
 
     if (!ride) return null;
