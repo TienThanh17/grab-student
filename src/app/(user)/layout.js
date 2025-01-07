@@ -12,8 +12,7 @@ export default function UserLayout({ children }) {
   const pathname = usePathname();
 
   // Kiểm tra nếu route là "/mess" thì ẩn Sidebar và MessageSideBar
-  const isMessPage = pathname === "/mess";
-
+  const isMessPage = pathname.startsWith("/mess");
 
   return (
     <>

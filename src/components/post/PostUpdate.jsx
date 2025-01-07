@@ -15,7 +15,7 @@ import { useDebouncedState } from "@/utils/customHook";
 import mapboxgl from "mapbox-gl";
 import Mapbox from "@/components/mapbox/Mapbox";
 import { getSuggestPlaceService, getDirectionService } from "./../../services/mapService";
-import { createPostService, updatePostService } from '@/services/postService'
+import { updatePostService } from '@/services/postService'
 import { useSelector } from 'react-redux';
 import { useSnackbar } from "notistack";
 
@@ -395,15 +395,6 @@ function PostUpdate({ handleClosePostUpdate, fetchPosts }) {
             />
           </Stack>
           <Mapbox mapRef={mapRef} setStarting={setStarting} setDestination={setDestination} setIsAddStartingMarker={setIsAddStartingMarker} setIsAddDestinationMarker={setIsAddDestinationMarker} setRetrieveDestination={setRetrieveDestination} setRetrieveStarting={setRetrieveStarting} destinationTextRef={destinationTextRef} startingTextRef={startingTextRef} />
-          {/* <Box
-          sx={{
-            bgcolor: "white",
-            flex: 2,
-            width: 1,
-            height: { xs: 1, sm: 1, md: "25rem" },
-            border: "1px solid red",
-          }}
-        ></Box> */}
         </Box>
 
         <Stack

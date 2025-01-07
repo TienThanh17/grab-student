@@ -142,7 +142,7 @@ function MyPost() {
           </TextField>
           <TextField
             select
-            label="Còn hạn"
+            label="Trạng thái"
             sx={{ width: '30%' }}
             value={isExpired}
             onChange={handleChangeIsExpired}

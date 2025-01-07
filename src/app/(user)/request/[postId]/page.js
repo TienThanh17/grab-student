@@ -353,6 +353,10 @@ function Request() {
         fetchRideRequest();
       }
     });
+
+    return () => {
+      socket.off("getNotification");
+    };
   }, []);
 
   useEffect(() => {
@@ -512,7 +516,7 @@ function Request() {
             <RideRequest data={item} clickedRequestId={requestId} handleMapbox={handleMapbox} postData={postData} handleAccept={handleAccept} fetchRideRequest={fetchRideRequest} />
           </Box>
         ))
-        : <Image style={{marginTop: '2rem'}} src={empty} alt='empty' width={150} height={150}></Image>
+        : <Image style={{ marginTop: '2rem' }} src={empty} alt='empty' width={150} height={150}></Image>
       }
     </Stack>
   )

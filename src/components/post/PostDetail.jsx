@@ -33,8 +33,11 @@ import { useParams, useRouter } from "next/navigation";
 import socket from "@/configs/socket";
 import { createNotiService } from "@/services/notiService";
 import { setIsLoading } from "@/redux-toolkit/loadingSlice";
+import { sendMessageService } from "@/services/messageService";
+import { useGlobalContext } from "@/provider/GlobalContext";
 
 function PostDetail({ handleClose, fetchPosts }) {
+  const { fetchConversation } = useGlobalContext();
   const params = useParams();
   const router = useRouter();
   const { enqueueSnackbar } = useSnackbar();
@@ -93,7 +96,6 @@ function PostDetail({ handleClose, fetchPosts }) {
   };
 
   const handleSubmit = async () => {
-    // console.log('postData', postData);
     dispatch(setIsLoading(true));
     try {
       if (params.postType === 'rider') {
@@ -112,6 +114,17 @@ function PostDetail({ handleClose, fetchPosts }) {
         }
         const res = await createRideRequestService(data);
         if (res.data.code === 0) {
+          if(message.trim().length > 0) {
+            const messRes = await sendMessageService({
+              senderId: userInfo.id,
+              recipientId: postData.student.id,
+              content: message
+            })
+            if (messRes.data.code === 0) {
+              socket.emit("sendMessage", res.data.data);
+              fetchConversation(userInfo.id)
+            }
+          }
           const resNoti = await createNotiService({
             senderId: userInfo.id,
             recipientId: postData.student.id,
@@ -153,14 +166,25 @@ function PostDetail({ handleClose, fetchPosts }) {
             riderId: userInfo.id,
             riderStartLocation: startingTextRef.current ?? postData.pickUpLocation,
             riderEndLocation: destinationTextRef.current ?? postData.dropOffLocation,
-            startLon: postData.pickUpLon,
-            startLat: postData.pickUpLat,
-            endLon: postData.dropOffLon,
-            endLat: postData.dropOffLat,
+            startLat: retrieveStarting[1],
+            startLon: retrieveStarting[0],
+            endLat: retrieveDestination[1],
+            endLon: retrieveDestination[0],
             estimatedTime: riderDuration ?? duration,
             distance: riderDistance ?? distance
           })
           if (res2.data.code === 0) {
+            if(message.trim().length > 0) {
+              const messRes = await sendMessageService({
+                senderId: userInfo.id,
+                recipientId: postData.student.id,
+                content: message
+              })
+              if (messRes.data.code === 0) {
+                socket.emit("sendMessage", res.data.data);
+                fetchConversation(userInfo.id)
+              }
+            }
             const resNoti = await createNotiService({
               senderId: userInfo.id,
               recipientId: postData.student.id,
@@ -210,7 +234,7 @@ function PostDetail({ handleClose, fetchPosts }) {
 
   const sendMessage = () => {
     //call api
-    console.log(message);
+    // console.log(message);
   };
 
   const getCurrentLocation = () => {
@@ -717,7 +741,7 @@ function PostDetail({ handleClose, fetchPosts }) {
             {postData.type === 'rider' ? 'Gửi yêu cầu' : 'Chấp nhận yêu cầu'}
           </Button>
           <TextField
-            label="Gửi tin nhắn"
+            label="Tin nhắn"
             value={message}
             onChange={handleChangeMessage}
             autoComplete="off"
@@ -736,7 +760,6 @@ function PostDetail({ handleClose, fetchPosts }) {
                 endAdornment: (
                   <InputAdornment
                     position="end"
-                    sx={{ cursor: "pointer" }}
                     onClick={sendMessage}
                   >
                     <SendIcon color="primary" />

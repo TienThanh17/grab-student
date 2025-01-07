@@ -11,25 +11,17 @@ import Typography from "@mui/material/Typography";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import userHeader from '@/public/images/userHeader.png';
+import { useGlobalContext } from "@/provider/GlobalContext";
+import { Avatar } from "@mui/material";
 
-const users = [
-  { avatar: userHeader, name: "Huỳnh Thanh Tiến" },
-  { avatar: userHeader, name: "Tiến Huỳnh Thanh" },
-  { avatar: userHeader, name: "Nguyen Thị Huyền Trân" },
-  { avatar: userHeader, name: "Huyền Trân" },
-  { avatar: userHeader, name: "Nguyen Thị Huyền Trân" },
-  { avatar: userHeader, name: "Nguyen Thị Huyền Trân" },
-  { avatar: userHeader, name: "Nguyen Thị Huyền Trân" },
-  { avatar: userHeader, name: "Nguyen Thị Huyền Trân" },
-  { avatar: userHeader, name: "Nguyen Thị Huyền Trân" },
-  { avatar: userHeader, name: "Nguyen Thị Huyền Trân" },
-  { avatar: userHeader, name: "Nguyen Thị Huyền Trân" },
-  { avatar: userHeader, name: "Nguyen Thị Huyền Trân" },
-
-];
 
 function MessageSideBar({ toggleDrawer }) {
   const router = useRouter();
+  const { conversations } = useGlobalContext();
+
+  const handleClickUser = (converId) => {
+    router.push(`/mess/${converId}`)
+  };
 
   return (
     <Box
@@ -41,18 +33,18 @@ function MessageSideBar({ toggleDrawer }) {
         Liên hệ gần đây
       </Typography>
       <List>
-        {users.map((value, index) => (
+        {conversations?.map((value, index) => (
           <div key={index}>
             <ListItem
               key={index}
               disablePadding
             >
-              <ListItemButton sx={{ mt: 2 }} onClick={() => { }}>
+              <ListItemButton sx={{ mt: 2 }} onClick={() => handleClickUser(value.id)}>
                 <ListItemIcon>
-                  <Image src={value.avatar} alt="avt" width={40} height={40} />
+                  <Avatar alt={value.student.name} src={value.student.avatarUrl} sx={{ width: 56, height: 56, mr: 1 }} />
                 </ListItemIcon>
                 <ListItemText
-                  primary={value.name}
+                  primary={value.student.name}
                   sx={{
                     "& .MuiTypography-root": { fontWeight: "bold" },
                   }}

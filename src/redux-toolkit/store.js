@@ -5,6 +5,7 @@ import createWebStorage from "redux-persist/lib/storage/createWebStorage";
 import postSlice from './postSlice'
 import userSlice from './userSlice'
 import loadingSlice from './loadingSlice'
+import messSlice from './messSlice'
 import autoMergeLevel2 from 'redux-persist/es/stateReconciler/autoMergeLevel2';
 
 const createNoopStorage = () => {
@@ -44,6 +45,7 @@ const rootReducer = combineReducers({
     post: postSlice, // Không cần persist
     user: persistedUserReducer, // Chỉ userSlice được persist
     loading: loadingSlice, // Không cần persist
+    mess: messSlice
 })
 
 export const store = configureStore({
