@@ -14,5 +14,19 @@ export const deleteUserManagerService = (id, data) => {
 export const createUserManagerService = (data) => {
     return axios.post(`/student/create`, data);
 }
+export const getPostManagerService = () => {
+    return axios.get(`posts/`);
+}
 
+export const getRideRequestManagerService = () => {
+    return axios.get(`riderequest/`);
+}
+
+export const getRideManagerService = () => {
+    return axios.get(`ride/`);
+}
+
+export const getRideReviewManagerService = () => {
+    return axios.get(`ride-review`);
+}
 
