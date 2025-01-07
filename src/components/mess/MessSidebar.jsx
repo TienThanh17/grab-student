@@ -3,8 +3,9 @@ import { Box, List, ListItem, ListItemAvatar, ListItemText, Avatar, Typography, 
 import SearchIcon from '@mui/icons-material/Search';
 import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 import CloseIcon from '@mui/icons-material/Close';
+import { formatNotificationTime } from '@/utils/functionUtils';
 
-export default function Sidebar({ users, onSelectUser, selectedUser, open, onClose }) {
+export default function Sidebar({ conversations, open, onClose, handleSelectUser, selectedUser }) {
   const theme = useTheme();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
 
@@ -32,31 +33,30 @@ export default function Sidebar({ users, onSelectUser, selectedUser, open, onClo
         </Box>
       </Box>
       <List sx={{ flex: 1, overflowY: 'auto', pt: 0 }}>
-        {users.map((user) => (
-          <ListItem 
-            key={user.id}
-            button 
-            onClick={() => onSelectUser(user)}
-            selected={selectedUser && selectedUser.id === user.id}
+        {conversations?.map((conversation) => (
+          <ListItem
+            key={conversation.id}
+            button
+            onClick={() => handleSelectUser(conversation.id)}
             sx={{
-              '&.Mui-selected': {
-                bgcolor: 'action.selected',
-                '&:hover': {
-                  bgcolor: 'action.selected',
-                },
+              bgcolor: selectedUser?.id == conversation.student.id ? 'primary.light' : 'background.paper', // Màu nền khi được chọn
+              color: selectedUser?.id == conversation.student.id ? 'primary.contrastText' : 'text.primary', // Màu chữ khi được chọn
+              '&:hover': {
+                bgcolor: selectedUser?.id == conversation.student.id ? 'primary.main' : 'action.hover', // Màu hover
               },
+              cursor: 'pointer'
             }}
           >
             <ListItemAvatar>
-              <Avatar alt={user.name} src={user.avatar} sx={{ width: 56, height: 56 }} />
+              <Avatar alt={conversation.student.name} src={conversation.student.avatarUrl} sx={{ width: 56, height: 56, mr: 1 }} />
             </ListItemAvatar>
-            <ListItemText 
-              primary={user.name} 
-              secondary={user.lastMessage}
+            <ListItemText
+              primary={conversation.student.name}
+              secondary={conversation.lastMessage}
               primaryTypographyProps={{ fontWeight: 'medium' }}
               secondaryTypographyProps={{ noWrap: true }}
             />
-            <Typography variant="caption" color="text.secondary">{user.lastMessageTime}</Typography>
+            <Typography variant="caption" color="text.secondary">{formatNotificationTime(conversation.lastMessageTime)}</Typography>
           </ListItem>
         ))}
       </List>
@@ -65,14 +65,14 @@ export default function Sidebar({ users, onSelectUser, selectedUser, open, onClo
 
   if (isDesktop) {
     return (
-      <Box 
-        sx={{ 
-          width: 350, 
+      <Box
+        sx={{
+          width: 350,
           flexShrink: 0,
           display: { xs: 'none', md: 'flex' },
           flexDirection: 'column',
-          borderRight: 1, 
-          borderColor: 'divider', 
+          borderRight: 1,
+          borderColor: 'divider',
           bgcolor: 'background.paper',
         }}
       >
@@ -88,7 +88,7 @@ export default function Sidebar({ users, onSelectUser, selectedUser, open, onClo
       onClose={onClose}
       sx={{
         display: { xs: 'block', md: 'none' },
-        '& .MuiDrawer-paper': { 
+        '& .MuiDrawer-paper': {
           width: 350,
           boxSizing: 'border-box',
         },

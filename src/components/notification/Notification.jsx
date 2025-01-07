@@ -8,30 +8,16 @@ import {
     Typography
 } from '@mui/material';
 import { markAsReadService } from '@/services/notiService';
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
-import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { useRouter } from 'next/navigation';
+import { formatNotificationTime } from '@/utils/functionUtils';
+import { useSelector } from 'react-redux';
+import { useGlobalContext } from '@/provider/GlobalContext';
 
-dayjs.extend(relativeTime);
-dayjs.extend(localizedFormat);
 
-const Notification = ({ notifications, fetchNotification, countUnreadNoti, handleCloseNoti }) => {
+const Notification = ({ handleCloseNoti }) => {
     const router = useRouter();
-    // console.log(notifications);
-
-    function formatNotificationTime(notificationTime) {
-        const now = dayjs();
-        const time = dayjs(notificationTime);
-
-        // Nếu thời gian nhỏ hơn 1 ngày
-        if (now.diff(time, 'day') < 1) {
-            return time.fromNow(); // Trả về '1 phút trước', '1 giờ trước', ...
-        }
-
-        // Nếu thời gian lâu hơn 1 ngày
-        return time.format('DD-MM-YYYY HH:mm');
-    }
+    const userInfo = useSelector((state) => state.user.userInfo);
+    const { fetchNotification, notifications, countUnreadNoti } = useGlobalContext();
 
     const handleNotificationClick = async (notification) => {
         try {
@@ -41,15 +27,13 @@ const Notification = ({ notifications, fetchNotification, countUnreadNoti, handl
                 router.push(`/my-request`)
             } else if (notification.type === 'accept_request' || notification.type === 'cancel_ride') {
                 router.push(`/ride/${notification.rideId}`)
-            } else if (notification.type === 'review' && !notification.isRead) {
-                
+            } else if (notification.type === 'review') {
+                router.push(`/ride/${notification.rideId}`)
             }
             if (!notification.isRead) {
                 const res = await markAsReadService(notification.id);
-                if (res.data.code === 0) {
-                    fetchNotification()
-                    countUnreadNoti()
-                }
+                fetchNotification(userInfo.id)
+                countUnreadNoti(userInfo.id)
             }
             handleCloseNoti()
         } catch (error) {

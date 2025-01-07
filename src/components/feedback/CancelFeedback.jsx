@@ -55,12 +55,29 @@ const CancelFeedbackDialog = ({ open, handleCloseDialog, userData, isRider, ride
     const { enqueueSnackbar } = useSnackbar();
     const router = useRouter();
 
+    const getNotiType = () => {
+        if (isCancelProactive && isRider) {
+            return 'rider_proactive_cancel'
+        } else if (!isCancelProactive && isRider) {
+            return 'rider_passive_cancel'
+        } else if (isCancelProactive && !isRider) {
+            return 'passenger_proactive_cancel'
+        } else if (!isCancelProactive && !isRider) {
+            return 'passenger_passive_cancel'
+        }
+    }
+  
     const handleSubmit = async () => {
         if (!rating) {
             setError("Please provide a rating");
             return;
         }
+        if (comment.trim().length === 0) {
+            setError("Please provide a comment");
+            return;
+        }
         try {
+            const cancelRes = await cancelRideService(ride.id)
             const res = await createReview({
                 rating,
                 comment,
@@ -72,14 +89,14 @@ const CancelFeedbackDialog = ({ open, handleCloseDialog, userData, isRider, ride
                 const resNoti = await createNotiService({
                     senderId: userId,
                     recipientId: userData.id,
-                    type: 'review',
+                    type: 'cancel_ride',
                     rideId: ride.id,
                 });
                 if (resNoti.data.code === 0) {
-                    socket.emit("sendNotification", {
+                     socket.emit("sendNotification", {
                         senderId: userId,
                         receiverId: userData.id,
-                        type: isRider ? 'passenger-review' : 'rider-review',
+                        type: getNotiType(),
                         ride: ride
                     });
                     enqueueSnackbar(
@@ -89,9 +106,7 @@ const CancelFeedbackDialog = ({ open, handleCloseDialog, userData, isRider, ride
                     setRating(0);
                     setComment("");
                     setError("");
-                    if (isRider === false) {
-                        router.push(`/ride/${ride.id}`)
-                    }
+                    router.push(`/ride/${ride.id}`)
                     handleCloseDialog();
                 }
             }
@@ -118,7 +133,7 @@ const CancelFeedbackDialog = ({ open, handleCloseDialog, userData, isRider, ride
                     socket.emit("sendNotification", {
                         senderId: userId,
                         receiverId: userData.id,
-                        type: isCancelProactive ? 'proactive_cancel_ride' : 'passive_cancel_ride',
+                        type: getNotiType(),
                         ride: ride
                     });
                     enqueueSnackbar(
@@ -128,19 +143,16 @@ const CancelFeedbackDialog = ({ open, handleCloseDialog, userData, isRider, ride
                     setRating(0);
                     setComment("");
                     setError("");
-                    if (isRider === false) {
-                        router.push(`/ride/${ride.id}`)
-                    }
+                    router.push(`/ride/${ride.id}`)
                     handleCloseDialog();
                 }
             }
         } catch (error) {
-
+            console.log(error);
         }
     }
 
-
-    const isSubmitDisabled = !rating;
+    const isSubmitDisabled = !rating && comment.trim().length > 0;
 
     return (
         <StyledDialog
@@ -222,15 +234,15 @@ const CancelFeedbackDialog = ({ open, handleCloseDialog, userData, isRider, ride
 
             <DialogActions>
                 <Button onClick={handleCancelRide} color="error">
-                    Không đánh giá
+                    Hủy & Không đánh giá
                 </Button>
                 <Button
                     onClick={handleSubmit}
                     variant="contained"
-                    color="primary"
+                    color="error"
                     disabled={isSubmitDisabled}
                 >
-                    Gửi đánh giá
+                    Hủy & Đánh giá
                 </Button>
             </DialogActions>
         </StyledDialog>

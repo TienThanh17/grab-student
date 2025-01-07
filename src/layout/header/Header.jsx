@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { styled, alpha } from "@mui/material/styles";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
@@ -37,7 +37,13 @@ import Notification from "@/components/notification/Notification";
 import { countUnReadService, getNotiByRecipientService } from "@/services/notiService";
 import socket from "@/configs/socket";
 import Feedback from "@/components/feedback/feedback";
-import { doneRideService } from "@/services/rideService";
+import { cancelRideService, doneRideService } from "@/services/rideService";
+import MessHeader from "@/components/mess/MessHeader";
+import { setConversations } from "@/redux-toolkit/messSlice";
+import { getConversationsService, getCountUnreadService } from "@/services/messageService";
+import { setIsLoading } from "@/redux-toolkit/loadingSlice";
+import { useGlobalContext } from "@/provider/GlobalContext";
+import CancelFeedbackDialog from "@/components/feedback/CancelFeedback";
 
 
 export default function Header() {
@@ -46,103 +52,91 @@ export default function Header() {
   const [openDrawer, setOpenDrawer] = useState(false);
   const [openPostCreation, setOpenPostCreation] = useState(false);
   const [notiAnchorEl, setNotiAnchorEl] = useState(null);
-  const [unreadCount, setUnreadCount] = useState(null);
+  const [messAnchorEl, setMessAnchorEl] = useState(null);
+  const { fetchCountUnreadMess, unreadMessCount, fetchNotification, countUnreadNoti,
+    unreadCount, fetchConversation } = useGlobalContext();
   const dispatch = useDispatch();
   const userInfo = useSelector((state) => state.user.userInfo)
   const router = useRouter();
-  const [notifications, setNotifications] = useState(null);
   const [notiData, setNotiData] = useState(null);
   const [openReview, setOpenReview] = useState(false);
+  const [openCancelReview, setOpenCancelReview] = useState(false);
 
-  // console.log(userInfo);
 
   const handleCloseReview = () => {
     setOpenReview(false);
   }
 
-  const fetchNotification = async (postId) => {
-    try {
-      const res = await getNotiByRecipientService(userInfo.id);
-      if (res.data.code === 0) {
-        setNotifications(res.data.data);
-      }
-    } catch (error) {
-      console.log(error);
-    }
+  const handleCloseCancelReview = () => {
+    setOpenCancelReview(false);
   }
 
-  const countUnreadNoti = async () => {
-    try {
-      const res = await countUnReadService(userInfo.id);
-      setUnreadCount(res.data.data);
-    } catch (error) {
-      console.log(error);
-    }
-  }
-
-  useEffect(() => {
-    socket.on("getNotification", (data) => {
-      console.log('noti-data', data);
-      countUnreadNoti();
-      fetchNotification();
-      if (data.type === 'passenger-review') {
-        setNotiData(data)
-        setOpenReview(true);
-      } else if (data.type === 'rider-review') {
-        try {
-          doneRideService(data.ride.id);
-        } catch (error) {
-          console.log(error);
-        }
+  const handleNotification = useCallback((data) => {
+    console.log('noti-data', data);
+    countUnreadNoti(userInfo.id);
+    fetchNotification(userInfo.id);
+    if (data.type === 'passenger-review') {
+      setNotiData(data)
+      setOpenReview(true);
+    } else if (data.type === 'rider-review') {
+      try {
+        doneRideService(data.ride.id);
+      } catch (error) {
+        console.log(error);
       }
-    });
-  }, []);
+    } else if (data.type === 'rider_proactive_cancel' || data.type === 'passenger_proactive_cancel') {
+      setNotiData(data);
+      setOpenCancelReview(true);
+    } else if (data.type === 'rider_passive_cancel' || data.type === 'passenger_passive_cancel') {
+      try {
+        cancelRideService(data.ride.id);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  }, [countUnreadNoti, fetchNotification, userInfo.id]);
+
+  const handleNewMessage = useCallback(() => {
+    fetchConversation(userInfo.id);
+    fetchCountUnreadMess(userInfo.id);
+  }, [fetchConversation, fetchCountUnreadMess, userInfo.id]);
 
   useEffect(() => {
-    countUnreadNoti();
-    fetchNotification();
+    countUnreadNoti(userInfo.id);
+    fetchNotification(userInfo.id);
+    fetchConversation(userInfo.id);
+    fetchCountUnreadMess(userInfo.id);
     socket.emit("newUser", userInfo.id);
-  }, [userInfo])
 
-  //noti logic
-  const handleClickNoti = (event) => {
-    setNotiAnchorEl(event.currentTarget);
-  };
-  const handleCloseNoti = () => {
-    setNotiAnchorEl(null);
-  };
+    socket.on("getNotification", handleNotification);
+    socket.on("getMessage", handleNewMessage);
+
+    return () => {
+      socket.off("getNotification", handleNotification);
+      socket.off("getMessage", handleNewMessage);
+    };
+  }, [userInfo.id]);
+
+  const handleClickNoti = (event) => setNotiAnchorEl(event.currentTarget);
+  const handleCloseNoti = () => setNotiAnchorEl(null);
   const openNoti = Boolean(notiAnchorEl);
   const idNoti = openNoti ? 'notification-popover' : undefined;
 
-  //mess logic
-  const handleClickMess = () => {
-    router.push('/mess')
-  }
+  const handleClickMess = (event) => setMessAnchorEl(event.currentTarget);
+  const handleCloseMess = () => setMessAnchorEl(null);
+  const openMess = Boolean(messAnchorEl);
+  const idMess = openMess ? 'mess-popover' : undefined;
 
-  const toggleDrawer = (newOpen) => () => {
-    setOpenDrawer(newOpen);
-  };
+  const toggleDrawer = (newOpen) => () => setOpenDrawer(newOpen);
 
-  const handleClosePostCreation = () => {
-    setOpenPostCreation(false);
-  };
-
-  const handleProfileMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleMobileMenuClose = () => {
-    setMobileMoreAnchorEl(null);
-  };
-
+  const handleClosePostCreation = () => setOpenPostCreation(false);
+  const handleProfileMenuOpen = (event) => setAnchorEl(event.currentTarget);
+  const handleMobileMenuClose = () => setMobileMoreAnchorEl(null);
   const handleMenuClose = () => {
     setAnchorEl(null);
     handleMobileMenuClose();
   };
-
-  const handleMobileMenuOpen = (event) => {
-    setMobileMoreAnchorEl(event.currentTarget);
-  };
+  const handleMobileMenuOpen = (event) => setMobileMoreAnchorEl(event.currentTarget);
 
   const handleOpenPostCreation = () => {
     handleMenuClose();
@@ -173,6 +167,7 @@ export default function Header() {
     handleMenuClose();
     dispatch(logout());
   }
+
 
   const userMenu = [
     { icon: add, label: "Tạo bài đăng", handle: handleOpenPostCreation },
@@ -286,7 +281,7 @@ export default function Header() {
           </Box>
 
           <Box sx={{ flexGrow: 1 }} />
-          <Search
+          {/* <Search
             sx={{
               flexGrow: 1,
               display: { xs: "none", sm: "none", md: "flex" },
@@ -299,7 +294,7 @@ export default function Header() {
               placeholder="Tìm đường..."
               inputProps={{ "aria-label": "search" }}
             />
-          </Search>
+          </Search> */}
           <Box sx={{ flexGrow: 1 }} />
 
           <Box sx={{ display: { xs: "none", sm: "none", md: "flex" } }}>
@@ -310,7 +305,7 @@ export default function Header() {
               sx={{ ml: 2 }}
               onClick={handleClickMess}
             >
-              <Badge badgeContent={4} color="error">
+              <Badge badgeContent={unreadMessCount} color="error">
                 <Image src={messHeader} alt="icon" width={30} height={30} />
               </Badge>
             </IconButton>
@@ -396,10 +391,30 @@ export default function Header() {
         }}
         disableScrollLock={true}
       >
-        <Notification notifications={notifications} fetchNotification={fetchNotification} countUnreadNoti={countUnreadNoti} handleCloseNoti={handleCloseNoti} />
+        <Notification handleCloseNoti={handleCloseNoti} />
       </Popover>
 
-      {notiData && <Feedback open={openReview} handleCloseDialog={handleCloseReview} userData={notiData.ride.rider} isRider={false} ride={notiData.ride} userId={userInfo.id} />}
+      <Popover
+        id={idMess}
+        open={openMess}
+        anchorEl={messAnchorEl}
+        onClose={handleCloseMess}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
+        disableScrollLock={true}
+      >
+        <MessHeader handleCloseMess={handleCloseMess} />
+      </Popover>
+
+      {notiData?.type === 'passenger-review' && <Feedback open={openReview} handleCloseDialog={handleCloseReview} userData={notiData.ride.rider} isRider={false} ride={notiData.ride} userId={userInfo.id} />}
+      {notiData?.type === 'rider_proactive_cancel' && <CancelFeedbackDialog open={openCancelReview} handleCloseDialog={handleCloseCancelReview} userData={notiData.ride.rider} isRider={false} ride={notiData.ride} userId={userInfo.id} />}
+      {notiData?.type === 'passenger_proactive_cancel' && <CancelFeedbackDialog open={openCancelReview} handleCloseDialog={handleCloseCancelReview} userData={notiData.ride.passenger} isRider={true} ride={notiData.ride} userId={userInfo.id} />}
     </Box>
   );
 }

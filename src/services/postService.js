@@ -1,7 +1,6 @@
 import axios from '@/configs/axios';
 
 export const getPostByIdService = (id) => {
-
     return axios.get(`posts/${id}`);
 }
 
@@ -21,12 +20,10 @@ export const getMyPostService = (postType, status, startDateFrom, startDateTo) =
 }
 
 export const createPostService = (data) => {
-
     return axios.post('/posts/create', data);
 }
 
 export const updatePostService = (id, data) => {
-
     return axios.put(`/posts/update/${id}`, data);
 }
 

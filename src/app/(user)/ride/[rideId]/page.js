@@ -25,6 +25,7 @@ import { getMultiDirectionService } from "@/services/mapService";
 import Image from "next/image";
 import goingGif from '@/public/images/going.gif'
 import like from '@/public/images/like.gif'
+import cancel from '@/public/images/cancel_ride.gif'
 import Feedback from "@/components/feedback/feedback";
 import socket from "@/configs/socket";
 import CancelFeedbackDialog from "@/components/feedback/CancelFeedback";
@@ -235,7 +236,6 @@ const TripInformation = () => {
                     .addTo(mapRef.current);
             }
 
-
             // Get directions
             getMultiDirection(startingLocation, destinationLocation, pickUpLocation, dropOffLocation)
                 .then(() => console.log('Direction fetched successfully'))
@@ -262,7 +262,7 @@ const TripInformation = () => {
 
     useEffect(() => {
         socket.on("getNotification", (data) => {
-            if (data.type === 'rider-review') {
+            if (data.type === 'rider-review' || data.type === 'rider_passive_cancel' || data.type === 'passenger_passive_cancel') {
                 getRide();
             }
         });
@@ -379,7 +379,7 @@ const TripInformation = () => {
                                 {ride.status === "GOING" ? "Đang diễn ra" : ride.status === "DONE" ? 'Chuyến đã hoàn thành' : 'Đã hủy chuyến'}
                             </Box>
                         </Typography>
-                        <Image unoptimized src={ride.status === 'GOING' ? goingGif : ride.status === 'DONE' ? like : null} alt="going" style={{ width: "10rem", height: "10rem" }} />
+                        <Image unoptimized src={ride.status === 'GOING' ? goingGif : ride.status === 'DONE' ? like : cancel} alt="going" style={{ width: "10rem", height: "10rem" }} />
                     </Stack>
                     {ride.status === 'GOING' && <Stack direction="row" alignItems='flex-end' gap='1rem'>
                         {ride.rider.id === userId && <Button variant="outlined" sx={{ height: '20%' }} startIcon={<FaShare />} onClick={handleFeedbackTrip}>
