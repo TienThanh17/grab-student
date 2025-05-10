@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { styled, alpha } from "@mui/material/styles";
 import AppBar from "@mui/material/AppBar";
 import Box from "@mui/material/Box";
@@ -13,15 +13,16 @@ import MenuIcon from "@mui/icons-material/Menu";
 import SearchIcon from "@mui/icons-material/Search";
 import MoreIcon from "@mui/icons-material/MoreVert";
 import Drawer from "@mui/material/Drawer";
-import { InputBase } from "@mui/material";
+import { Avatar, Divider, Fade, InputBase, Popover, Stack } from "@mui/material";
 import Modal from "@mui/material/Modal";
-
+import FeedIcon from '@mui/icons-material/Feed';
 import userIcon from "@/public/images/User.png";
 import Inquiry from "@/public/images/Inquiry.png";
 import Motorcycle from "@/public/images/Motorcycle.png";
 import Logout from "@/public/images/Logout.png";
 import Image from "next/image";
 import messageIcon from "@/public/images/Chat Message.png";
+import news from "@/public/images/News.png";
 import logo from "@/public/images/logo.png";
 import userHeader from "@/public/images/userHeader.png";
 import messHeader from "@/public/images/messHeader.png";
@@ -29,53 +30,156 @@ import notifHeader from "@/public/images/notifHeader.png";
 import add from "@/public/images/Add.png";
 import Sidebar from "../sidebar/Sidebar";
 import PostCreation from "@/components/post/PostCreation";
+import { useRouter } from 'next/navigation';
+import { useDispatch, useSelector } from "react-redux";
+import { logout } from '@/redux-toolkit/userSlice';
+import Notification from "@/components/notification/Notification";
+import { countUnReadService, getNotiByRecipientService } from "@/services/notiService";
+import socket from "@/configs/socket";
+import Feedback from "@/components/feedback/feedback";
+import { cancelRideService, doneRideService } from "@/services/rideService";
+import MessHeader from "@/components/mess/MessHeader";
+import { setConversations } from "@/redux-toolkit/messSlice";
+import { getConversationsService, getCountUnreadService } from "@/services/messageService";
+import { setIsLoading } from "@/redux-toolkit/loadingSlice";
+import { useGlobalContext } from "@/provider/GlobalContext";
+import CancelFeedbackDialog from "@/components/feedback/CancelFeedback";
+
 
 export default function Header() {
   const [anchorEl, setAnchorEl] = useState(null);
   const [mobileMoreAnchorEl, setMobileMoreAnchorEl] = useState(null);
   const [openDrawer, setOpenDrawer] = useState(false);
   const [openPostCreation, setOpenPostCreation] = useState(false);
+  const [notiAnchorEl, setNotiAnchorEl] = useState(null);
+  const [messAnchorEl, setMessAnchorEl] = useState(null);
+  const { fetchCountUnreadMess, unreadMessCount, fetchNotification, countUnreadNoti,
+    unreadCount, fetchConversation } = useGlobalContext();
+  const dispatch = useDispatch();
+  const userInfo = useSelector((state) => state.user.userInfo)
+  const router = useRouter();
+  const [notiData, setNotiData] = useState(null);
+  const [openReview, setOpenReview] = useState(false);
+  const [openCancelReview, setOpenCancelReview] = useState(false);
 
-  const toggleDrawer = (newOpen) => () => {
-    setOpenDrawer(newOpen);
-  };
 
-  const handleClosePostCreation = () => {
-    setOpenPostCreation(false);
+  const handleCloseReview = () => {
+    setOpenReview(false);
+  }
+
+  const handleCloseCancelReview = () => {
+    setOpenCancelReview(false);
+  }
+
+  const handleNotification = useCallback((data) => {
+    console.log('noti-data', data);
+    countUnreadNoti(userInfo.id);
+    fetchNotification(userInfo.id);
+    if (data.type === 'passenger-review') {
+      setNotiData(data)
+      setOpenReview(true);
+    } else if (data.type === 'rider-review') {
+      try {
+        doneRideService(data.ride.id);
+      } catch (error) {
+        console.log(error);
+      }
+    } else if (data.type === 'rider_proactive_cancel' || data.type === 'passenger_proactive_cancel') {
+      setNotiData(data);
+      setOpenCancelReview(true);
+    } else if (data.type === 'rider_passive_cancel' || data.type === 'passenger_passive_cancel') {
+      try {
+        cancelRideService(data.ride.id);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+  }, [countUnreadNoti, fetchNotification, userInfo.id]);
+
+  const handleNewMessage = useCallback(() => {
+    fetchConversation(userInfo.id);
+    fetchCountUnreadMess(userInfo.id);
+  }, [fetchConversation, fetchCountUnreadMess, userInfo.id]);
+
+  useEffect(() => {
+    countUnreadNoti(userInfo.id);
+    fetchNotification(userInfo.id);
+    fetchConversation(userInfo.id);
+    fetchCountUnreadMess(userInfo.id);
+    socket.emit("newUser", userInfo.id);
+
+    socket.on("getNotification", handleNotification);
+    socket.on("getMessage", handleNewMessage);
+
+    return () => {
+      socket.off("getNotification", handleNotification);
+      socket.off("getMessage", handleNewMessage);
+    };
+  }, [userInfo.id]);
+
+  const handleClickNoti = (event) => setNotiAnchorEl(event.currentTarget);
+  const handleCloseNoti = () => setNotiAnchorEl(null);
+  const openNoti = Boolean(notiAnchorEl);
+  const idNoti = openNoti ? 'notification-popover' : undefined;
+
+  const handleClickMess = (event) => setMessAnchorEl(event.currentTarget);
+  const handleCloseMess = () => setMessAnchorEl(null);
+  const openMess = Boolean(messAnchorEl);
+  const idMess = openMess ? 'mess-popover' : undefined;
+
+  const toggleDrawer = (newOpen) => () => setOpenDrawer(newOpen);
+
+  const handleClosePostCreation = () => setOpenPostCreation(false);
+  const handleProfileMenuOpen = (event) => setAnchorEl(event.currentTarget);
+  const handleMobileMenuClose = () => setMobileMoreAnchorEl(null);
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+    handleMobileMenuClose();
   };
+  const handleMobileMenuOpen = (event) => setMobileMoreAnchorEl(event.currentTarget);
 
   const handleOpenPostCreation = () => {
     handleMenuClose();
     setOpenPostCreation(true);
   };
 
-  const isMenuOpen = Boolean(anchorEl);
-  const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
+  const handleClickMyPost = () => {
+    handleMenuClose();
+    router.push(`/my-post`);
+  }
 
-  const handleProfileMenuOpen = (event) => {
-    setAnchorEl(event.currentTarget);
-  };
+  const handleClickProfile = () => {
+    handleMenuClose();
+    router.push(`/profile`);
+  }
 
-  const handleMobileMenuClose = () => {
-    setMobileMoreAnchorEl(null);
-  };
+  const handleClickRequest = () => {
+    handleMenuClose();
+    router.push(`/my-request`);
+  }
 
-  const handleMenuClose = () => {
-    setAnchorEl(null);
-    handleMobileMenuClose();
-  };
+  const handleClickRide = () => {
+    handleMenuClose();
+    router.push(`/ride`);
+  }
 
-  const handleMobileMenuOpen = (event) => {
-    setMobileMoreAnchorEl(event.currentTarget);
-  };
+  const handleClickLogout = () => {
+    handleMenuClose();
+    dispatch(logout());
+  }
+
 
   const userMenu = [
     { icon: add, label: "Tạo bài đăng", handle: handleOpenPostCreation },
-    { icon: userIcon, label: "Thông tin cá nhân", handle: handleMenuClose },
-    { icon: Motorcycle, label: "Bài đăng của tôi", handle: handleMenuClose },
-    { icon: Inquiry, label: "Yêu cầu chở", handle: handleMenuClose },
-    { icon: Logout, label: "Đăng xuất", handle: handleMenuClose },
+    { icon: userIcon, label: "Thông tin cá nhân", handle: handleClickProfile },
+    { icon: news, label: "Bài đăng của tôi", handle: handleClickMyPost },
+    { icon: Inquiry, label: "Yêu cầu của tôi", handle: handleClickRequest },
+    { icon: Motorcycle, label: "Chuyến xe", handle: handleClickRide },
+    { icon: Logout, label: "Đăng xuất", handle: handleClickLogout },
   ];
+
+  const isMenuOpen = Boolean(anchorEl);
+  const isMobileMenuOpen = Boolean(mobileMoreAnchorEl);
 
   const menuId = "primary-search-account-menu";
   const renderMenu = (
@@ -93,7 +197,12 @@ export default function Header() {
       }}
       open={isMenuOpen}
       onClose={handleMenuClose}
+      disableScrollLock={true}
     >
+      <Stack alignItems='center' justifyContent='center' p={1}>
+        {userInfo?.name}
+      </Stack>
+      <Divider></Divider>
       {userMenu.map((value, index) => (
         <MenuItem
           key={index}
@@ -110,19 +219,20 @@ export default function Header() {
   const mobileMenuId = "primary-search-account-menu-mobile";
   const renderMobileMenu = (
     <Menu
+      id={mobileMenuId}
       anchorEl={mobileMoreAnchorEl}
       anchorOrigin={{
         vertical: "top",
         horizontal: "right",
       }}
-      id={mobileMenuId}
-      keepMounted
       transformOrigin={{
         vertical: "top",
         horizontal: "right",
       }}
+      keepMounted
       open={isMobileMenuOpen}
       onClose={handleMobileMenuClose}
+      disableScrollLock={true}
     >
       {userMenu.map((value, index) => (
         <MenuItem
@@ -138,7 +248,7 @@ export default function Header() {
   );
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={{ flexGrow: 1, position: 'fixed', width: 1, zIndex: 999 }}>
       <AppBar
         position="static"
         sx={{
@@ -162,7 +272,7 @@ export default function Header() {
             <MenuIcon />
           </IconButton>
 
-          <Box sx={{ width: { xs: 50, md: 100 }, height: { xs: 25, md: 50 } }}>
+          <Box sx={{ width: { xs: 50, md: 100 }, height: { xs: 25, md: 50 }, cursor: 'pointer' }} onClick={() => router.push(`/rider`)}>
             <Image
               src={logo}
               alt="logo"
@@ -171,7 +281,7 @@ export default function Header() {
           </Box>
 
           <Box sx={{ flexGrow: 1 }} />
-          <Search
+          {/* <Search
             sx={{
               flexGrow: 1,
               display: { xs: "none", sm: "none", md: "flex" },
@@ -184,7 +294,7 @@ export default function Header() {
               placeholder="Tìm đường..."
               inputProps={{ "aria-label": "search" }}
             />
-          </Search>
+          </Search> */}
           <Box sx={{ flexGrow: 1 }} />
 
           <Box sx={{ display: { xs: "none", sm: "none", md: "flex" } }}>
@@ -193,8 +303,9 @@ export default function Header() {
               aria-label="show 4 new mails"
               color="inherit"
               sx={{ ml: 2 }}
+              onClick={handleClickMess}
             >
-              <Badge badgeContent={4} color="error">
+              <Badge badgeContent={unreadMessCount} color="error">
                 <Image src={messHeader} alt="icon" width={30} height={30} />
               </Badge>
             </IconButton>
@@ -203,23 +314,13 @@ export default function Header() {
               aria-label="show 17 new notifications"
               color="inherit"
               sx={{ ml: 2 }}
+              onClick={handleClickNoti}
             >
-              <Badge badgeContent={17} color="error">
+              <Badge badgeContent={unreadCount} color="error">
                 <Image src={notifHeader} alt="icon" width={30} height={30} />
               </Badge>
             </IconButton>
-            <IconButton
-              size="large"
-              edge="end"
-              aria-label="account of current user"
-              aria-controls={menuId}
-              aria-haspopup="true"
-              onClick={handleProfileMenuOpen}
-              color="inherit"
-              sx={{ ml: 2 }}
-            >
-              <Image src={userHeader} alt="icon" width={30} height={30} />
-            </IconButton>
+            <Avatar src={userInfo?.avatarUrl} alt="userInfo" sx={{ width: 50, height: 50, ml: 2, cursor: 'pointer' }} onClick={handleProfileMenuOpen} aria-controls={menuId} />
           </Box>
           <Box sx={{ display: { xs: "flex", sm: "flex", md: "none" } }}>
             <IconButton
@@ -262,6 +363,7 @@ export default function Header() {
       </AppBar>
       {renderMobileMenu}
       {renderMenu}
+
       <Drawer
         sx={{ display: { sm: "block", md: "none" } }}
         open={openDrawer}
@@ -269,9 +371,50 @@ export default function Header() {
       >
         <Sidebar toggleDrawer={toggleDrawer} />
       </Drawer>
-      <Modal open={openPostCreation} onClose={handleClosePostCreation}>
+
+      <Modal open={openPostCreation} onClose={handleClosePostCreation} TransitionComponent={Fade} disableScrollLock={true}>
         <PostCreation handleClosePostCreation={handleClosePostCreation} />
       </Modal>
+
+      <Popover
+        id={idNoti}
+        open={openNoti}
+        anchorEl={notiAnchorEl}
+        onClose={handleCloseNoti}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        disableScrollLock={true}
+      >
+        <Notification handleCloseNoti={handleCloseNoti} />
+      </Popover>
+
+      <Popover
+        id={idMess}
+        open={openMess}
+        anchorEl={messAnchorEl}
+        onClose={handleCloseMess}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
+        disableScrollLock={true}
+      >
+        <MessHeader handleCloseMess={handleCloseMess} />
+      </Popover>
+
+      {notiData?.type === 'passenger-review' && <Feedback open={openReview} handleCloseDialog={handleCloseReview} userData={notiData.ride.rider} isRider={false} ride={notiData.ride} userId={userInfo.id} />}
+      {notiData?.type === 'rider_proactive_cancel' && <CancelFeedbackDialog open={openCancelReview} handleCloseDialog={handleCloseCancelReview} userData={notiData.ride.rider} isRider={false} ride={notiData.ride} userId={userInfo.id} />}
+      {notiData?.type === 'passenger_proactive_cancel' && <CancelFeedbackDialog open={openCancelReview} handleCloseDialog={handleCloseCancelReview} userData={notiData.ride.passenger} isRider={true} ride={notiData.ride} userId={userInfo.id} />}
     </Box>
   );
 }

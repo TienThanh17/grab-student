@@ -1,0 +1,86 @@
+.Modal-Add {
+  .header-text {
+    margin: 20px 0 30px 0;
+    font-size: 30px;
+    font-weight: bold;
+  }
+
+  .modal-add-input-wrapper {
+    display: flex;
+    gap: 30px;
+
+    .modal-add-input-flex {
+      flex: 1;
+
+      .date-picker {
+        width: 100%;
+        font-size: var(--text-fontSize);
+        background-color: #f0f0f0;
+        color: rgba(0, 0, 0, 0.6);
+        margin-top: 15px;
+        padding: 2rem 1rem;
+
+        .css-o9k5xi-MuiInputBase-root-MuiOutlinedInput-root {
+          font-size: var(--text-fontSize);
+          color: #1f1f1f;
+          font-weight: 500;
+        }
+
+        .css-nxo287-MuiInputBase-input-MuiOutlinedInput-input {
+          padding: 0;
+          color: rgba(0, 0, 0, 0.6);
+        }
+
+        .css-i4bv87-MuiSvgIcon-root {
+          font-size: 3rem;
+          color: var(--second-color);
+          -webkit-user-select: none;
+          user-select: none;
+        }
+
+        .MuiOutlinedInput-notchedOutline {
+          border: none !important;
+        }
+      }
+
+      .error-message-flex {
+        color: red;
+        font-size: var(--small-fontSize);
+        margin-top: 1rem;
+      }
+    }
+  }
+
+  .modal-add-input {
+    height: 12rem;
+    margin: 1rem 0;
+
+    .label {
+      font-size: var(--text-fontSize);
+      font-weight: bold;
+      color: #00000099;
+    }
+
+    .text-field {
+      margin-top: 15px;
+      width: 60rem;
+    }
+
+    .text-field-text {
+      font-size: var(--text-fontSize);
+    }
+
+    .error-message {
+      color: red;
+      font-size: var(--small-fontSize);
+      margin-top: 1rem;
+    }
+  }
+
+  .btn {
+    width: 15rem;
+    border-radius: 10px;
+    font-size: var(--text-fontSize);
+    background-color: #022e6c;
+  }
+}

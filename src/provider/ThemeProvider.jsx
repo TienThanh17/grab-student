@@ -12,7 +12,7 @@ let theme = createTheme({
       lg: 1200,
       xl: 1536,
       background: 1850,
-      content: 950,
+      content: 1200,
     },
   },
   typography: {

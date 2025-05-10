@@ -1,16 +1,16 @@
 :root {
-  --background: #EBEBEB;
+  --background: #f1f2f6;
   --foreground: #171717;
   --main-color: #124874;
   --font-size: 16px;
 }
-
+/* 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
   }
-}
+} */
 
 html,
 body {
@@ -19,8 +19,8 @@ body {
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
+  color: var(--foreground) !important;
+  background: var(--background) !important;
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -51,3 +51,22 @@ input {
     color-scheme: dark;
   }
 }
+
+.marker {
+  background-image: url('../public/images/startingMarker.png');
+  background-size: cover;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.postStartingMarker {
+  background-image: url('../public/images/postStartingMarker.png');
+  background-size: cover;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+

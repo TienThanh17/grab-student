@@ -1,0 +1,49 @@
+.admin-sidebar-container {
+    width: 20rem;
+    height: 105vh;
+    position: fixed;
+
+    background-color: rgb(42, 82, 138);
+
+    .menu {
+        display: flex;
+        flex-direction: column;
+        padding: 0 1rem;
+
+        .menu-item-container {
+            color: white;
+            height: 6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 1rem 0;
+            width: 100%;
+            transition: transform 0.3s ease, color 0.3s ease;
+
+            &:hover {
+                cursor: pointer;
+                transform: scale(1.1);
+                background-color: #4a73ab69;
+                border-radius: 1rem;
+            }
+
+            &.selected {
+                background-color: #4a73ab;
+                border-radius: 1rem;
+                font-weight: bold;
+            }
+
+            .menu-item {
+                display: flex;
+                align-items: center;
+                justify-content: flex-start;
+                width: 100%;
+                padding: 0 1.5rem;
+
+                .text {
+                    font-size: 1.5rem;
+                }
+            }
+        }
+    }
+}

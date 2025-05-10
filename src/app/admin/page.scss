@@ -1,0 +1,106 @@
+.admin-overview {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .statistic {
+        display: flex;
+        margin-top: 2rem;
+
+        .statistic-item {
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            font-size: var(--text-fontSize);
+            height: 13rem;
+            margin: 0 10rem;
+            padding: 1rem 2rem;
+            box-shadow: 2px 2px 4px 0px rgba(0, 0, 0, 0.5);
+            border-radius: 1rem;
+
+            .statistic-item-info {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+
+                .number {
+                    font-weight: bold;
+                    margin-top: 1rem;
+                    font-size: 2rem;
+                }
+            }
+        }
+    }
+
+    .chart-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        width: 80%;
+        padding: 2rem;
+        margin-top: 5rem;
+        box-shadow: 2px 2px 4px 0px rgba(0, 0, 0, 0.5);
+
+        .text {
+            font-size: var(--title-fontSize);
+        }
+
+        .css-1nbiur3-MuiResponsiveChart-container {
+            width: 1280px;
+        }
+    }
+
+    .order-status-container {
+        margin-top: 5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        box-shadow: 2px 2px 4px 0px rgba(0, 0, 0, 0.5);
+        font-size: var(--text-fontSize);
+        width: 80%;
+        padding: 2rem;
+
+        .order-status-heading {
+            margin-bottom: 2rem;
+        }
+
+        .order-status-grid-container {
+            width: 60%;
+
+            .order-status-item {
+                border-bottom: 1px solid gray;
+                padding: 2rem;
+
+                .detail {
+                    color: blue;
+                    margin-left: 5rem;
+                }
+            }
+
+            .order-item-left {
+                border-right: 1px solid gray;
+                display: flex;
+                align-items: center;
+                justify-content: flex-start;
+
+                img {
+                    margin-right: 5%;
+                }
+            }
+
+            .order-item-right {
+                border-right: 1px solid gray;
+                display: flex;
+                align-items: center;
+                justify-content: flex-end;
+
+                img {
+                    margin-right: 5%;
+                }
+            }
+        }
+    }
+}
